@@ -1,0 +1,13 @@
+fileFormatVersion: 2
+guid: ba699b8c1a9fbcf408f90d8d80179e4c
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - chitaPrefab: {fileID: 1186331771519954, guid: 371477d7914b1a24e94e7d7e1b0088f7,
+      type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
