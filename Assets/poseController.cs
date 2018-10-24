@@ -118,7 +118,7 @@ public class poseController : MonoBehaviour{
                 {
                     InitArgamassaNeuralNetworks();
                     generationNumber++;
-                    Debug.Log(consulta(2));
+                    //Debug.Log(consulta(2));
                     nets[2].SetFitness(0f);
                 }else{
                     nets.Sort();
@@ -189,11 +189,12 @@ public class poseController : MonoBehaviour{
 
                     inputs[3] = conversao(inputs[3], 90f, -90f, 0.5f, -0.5f);
                     inputs[2] = animals[0].torax.transform.position.y - chao.transform.position.y /*Altura do tórax*/;
-                    //inputs[2] = conversao(inputs[2], 90f, -90f, 0.5f, -0.5f);
+                    inputs[2] = conversao(inputs[2], -1.5f, -2.8f, 0.5f, -0.5f);
                     inputs[1] = animals[0].rb3.transform.position.y - chao.transform.position.y  /*Altura da pata da frente*/;
-                    inputs[1] = conversao(inputs[1], 5f, -1f, 0.5f, -0.5f);
+                    inputs[1] = conversao(inputs[1], -2f, -3.88f, 0.5f, -0.5f);
                     inputs[0] = animals[0].rb6.transform.position.y - chao.transform.position.y /*Altura da pata de trás*/;
-                    inputs[0] = conversao(inputs[0], 5f, -1f, 0.5f, -0.5f);
+                    inputs[0] = conversao(inputs[0], -2f, -3.88f, 0.5f, -0.5f);
+                    //print("0: " + inputs[0] + " 1:" + inputs[1] + " 2:" + inputs[2] + " 3:" + inputs[3]);
 
                     float[] output = animals[0].net.FeedForward(inputs);
                     if (output[0] > 0.4f)
@@ -243,7 +244,7 @@ public class poseController : MonoBehaviour{
                 if (generationNumber == 0){
                     InitArgamassaNeuralNetworks();
                     generationNumber++;
-                    Debug.Log(consulta(2));
+                    //Debug.Log(consulta(2));
                     nets[2].SetFitness(0f);
                 }else{
                     nets.Sort();
@@ -288,15 +289,16 @@ public class poseController : MonoBehaviour{
                     if (animals[0].torax.transform.eulerAngles.z > 180){
                         inputs[3] = animals[0].torax.transform.eulerAngles.z - 360;
                     }else{
-                        inputs[3] = conversao(animals[0].torax.transform.eulerAngles.z, 90f, -90f, 0.5f, -0.5f);
+                        inputs[3] = animals[0].torax.transform.eulerAngles.z;
                     }
                     inputs[3] = conversao(inputs[3], 90f, -90f, 0.5f, -0.5f);
                     inputs[2] = animals[0].torax.transform.position.y - chao.transform.position.y /*Altura do tórax*/;
-                    //inputs[2] = conversao(inputs[2], 90f, -90f, 0.5f, -0.5f);
+                    inputs[2] = conversao(inputs[2], -1.5f, -2.8f, 0.5f, -0.5f);
                     inputs[1] = animals[0].rb3.transform.position.y - chao.transform.position.y  /*Altura da pata da frente*/;
-                    inputs[1] = conversao(inputs[1], 5f, -1f, 0.5f, -0.5f);
+                    inputs[1] = conversao(inputs[1], -2f, -3.88f, 0.5f, -0.5f);
                     inputs[0] = animals[0].rb6.transform.position.y - chao.transform.position.y /*Altura da pata de trás*/;
-                    inputs[0] = conversao(inputs[0], 5f, -1f, 0.5f, -0.5f);
+                    inputs[0] = conversao(inputs[0], -2f, -3.88f, 0.5f, -0.5f);
+                    //print("0: " + inputs[0] + " 1:" + inputs[1] + " 2:" + inputs[2] + " 3:" + inputs[3]);
 
                     float[] output = animals[0].net.FeedForward(inputs);
                     if (output[0] > 0.4f){
@@ -395,13 +397,12 @@ public class poseController : MonoBehaviour{
         return ("Inseriu");
     }
 
-    public string consulta(int rede)
+    public void consulta(int rede)
     {
         string sql = "SELECT id, layers, weights" + " FROM redes_neurais";
         _command.CommandText = sql;
         IDataReader reader = _command.ExecuteReader();
 
-        string retorno = "";
         float[][][] weights = nets[rede].GetWeights();
         while (reader.Read())
         {
@@ -442,7 +443,7 @@ public class poseController : MonoBehaviour{
                         if (float.TryParse(ySplit[k], out result))
                         {
                             neuronWeights[k] = result;
-                            retorno += "Peso: " + weights[i][j][k] + "\n";
+                            //retorno += "Peso: " + weights[i][j][k] + "\n";
                         }
                     }
                     layerWeightsList.Add(neuronWeights);
@@ -452,22 +453,9 @@ public class poseController : MonoBehaviour{
             weights = weightsList.ToArray(); //convert to 3D array
         }
 
-        retorno = "";
-        for (int i = 0; i < weights.Length; i++)
-        {
-            for (int j = 0; j < weights[i].Length; j++)
-            {
-                for (int k = 0; k < weights[i][j].Length; k++)
-                {
-                    retorno += "Peso: " + weights[i][j][k] + "\n";
-                }
-            }
-        }
-
         nets[rede].SetWeight(weights);
         nets[rede].nome = "XXXX";
         Debug.Log("Recuperou do banco");
-        return retorno;
     }
 
     public string atualizar()
