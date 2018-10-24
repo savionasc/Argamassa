@@ -50,8 +50,13 @@ public class NeuralNetwork : IComparable<NeuralNetwork>{
     /// Deep copy constructor 
     /// </summary>
     /// <param name="copyNetwork">Network to deep copy</param>
-    public NeuralNetwork(NeuralNetwork copyNetwork){
-        this.nome = copyNetwork.nome;
+    public NeuralNetwork(NeuralNetwork copyNetwork, bool flag){
+        if (flag){
+            this.nome = copyNetwork.nome;
+        }
+        else {
+            this.nome = copyNetwork.nome + UnityEngine.Random.Range(0, 30);
+        }
         this.layers = new int[copyNetwork.layers.Length];
         sLayer = "";
         for (int i = 0; i < copyNetwork.layers.Length; i++){

@@ -35,10 +35,10 @@ public class Manager : MonoBehaviour {
                 nets.Sort();
                 for (int i = 0; i < populationSize / 2; i++)
                 {
-                    nets[i] = new NeuralNetwork(nets[i+(populationSize / 2)]);
+                    nets[i] = new NeuralNetwork(nets[i+(populationSize / 2)], false);
                     nets[i].Mutate();
 
-                    nets[i + (populationSize / 2)] = new NeuralNetwork(nets[i + (populationSize / 2)]); //too lazy to write a reset neuron matrix values method....so just going to make a deepcopy lol
+                    nets[i + (populationSize / 2)] = new NeuralNetwork(nets[i + (populationSize / 2)], true); //too lazy to write a reset neuron matrix values method....so just going to make a deepcopy lol
                 }
 
                 for (int i = 0; i < populationSize; i++)
