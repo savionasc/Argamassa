@@ -11,27 +11,27 @@ public class NeuralNetwork : IComparable<NeuralNetwork>{
     private float[][][] weights; //weight matrix
     private string sWeight = "";
     private float fitness; //fitness of the network
-    private static string[] m_HardCodedStrings = new string[]
-             {
-                 "A","B","C","D","E","F","G","H","I","J","K","L","M","n","O","P","Q","R","S","T","U","V", "W", "X", "Y","Z"
-             };
-    public string nome = "";
+    //private static string[] m_HardCodedStrings = new string[]
+    //         {
+    //             "A","B","C","D","E","F","G","H","I","J","K","L","M","n","O","P","Q","R","S","T","U","V", "W", "X", "Y","Z"
+    //         };
+    //public string nome = "";
 
-    public string randdd(){
-        return m_HardCodedStrings[UnityEngine.Random.Range(0, m_HardCodedStrings.Length)]
-            + UnityEngine.Random.Range(0, 9)
-            + m_HardCodedStrings[UnityEngine.Random.Range(0, m_HardCodedStrings.Length)];
-    }
+    //public string randdd(){
+    //    return m_HardCodedStrings[UnityEngine.Random.Range(0, m_HardCodedStrings.Length)]
+    //        + UnityEngine.Random.Range(0, 9)
+    //        + m_HardCodedStrings[UnityEngine.Random.Range(0, m_HardCodedStrings.Length)];
+    //}
 
-    public void carregarRedeNeural(){
+    //public void carregarRedeNeural(){
 
-    }
+    //}
     /// <summary>
     /// Initilizes and neural network with random weights
     /// </summary>
     /// <param name="layers">layers to the neural network</param>
     public NeuralNetwork(int[] layers){
-        nome = randdd();
+        //nome = randdd();
         //deep copy of layers of this network 
         this.layers = new int[layers.Length];
         sLayer = "";
@@ -50,13 +50,13 @@ public class NeuralNetwork : IComparable<NeuralNetwork>{
     /// Deep copy constructor 
     /// </summary>
     /// <param name="copyNetwork">Network to deep copy</param>
-    public NeuralNetwork(NeuralNetwork copyNetwork, bool flag){
-        if (flag){
-            this.nome = copyNetwork.nome;
-        }
-        else {
-            this.nome = copyNetwork.nome + UnityEngine.Random.Range(0, 30);
-        }
+    public NeuralNetwork(NeuralNetwork copyNetwork){//, bool flag){
+        //if (flag){
+        //    this.nome = copyNetwork.nome;
+        //}
+        //else {
+        //    this.nome = copyNetwork.nome + UnityEngine.Random.Range(0, 30);
+        //}
         this.layers = new int[copyNetwork.layers.Length];
         sLayer = "";
         for (int i = 0; i < copyNetwork.layers.Length; i++){
@@ -114,7 +114,7 @@ public class NeuralNetwork : IComparable<NeuralNetwork>{
                 //itterate over all neurons in the previous layer and set the weights randomly between 0.5f and -0.5
                 for (int k = 0; k < neuronsInPreviousLayer; k++){
                     //give random weights to neuron weights
-                    neuronWeights[k] = UnityEngine.Random.Range(-0.5f, 0.5f);
+                    neuronWeights[k] = Truncar(UnityEngine.Random.Range(-0.5f, 0.5f));
                     sWeight += neuronWeights[k] + " ";
                 }
 
@@ -147,12 +147,16 @@ public class NeuralNetwork : IComparable<NeuralNetwork>{
                 for (int k = 0; k < neurons[i - 1].Length; k++){
                     value += weights[i - 1][j][k] * neurons[i - 1][k]; //sum off all weights connections of this neuron weight their values in previous layer
                 }
-                neurons[i][j] = (float)Math.Tanh(value); //Hyperbolic tangent activation
+                neurons[i][j] = Truncar((float)Math.Tanh(value)); //Hyperbolic tangent activation //é necessário truncar?
             }
         }
         return neurons[neurons.Length - 1]; //return output layer
     }
-
+    private float Truncar(float numero){
+        // float truncated = (float)(Math.Truncate((double)f*100.0) / 100.0);
+        // float rounded = (float)(Math.Round((double)f, 2);
+        return (float)(Math.Truncate((double)numero * 100.0) / 100000.0);
+    }
     /// <summary>
     /// Mutate neural network weights
     /// </summary>
@@ -165,6 +169,7 @@ public class NeuralNetwork : IComparable<NeuralNetwork>{
 
                     //mutate weight value 
                     float randomNumber = UnityEngine.Random.Range(0f, 100f);
+                    randomNumber = Truncar(randomNumber);
 
                     if (randomNumber <= 2f){ //if 1
                       //flip sign of weight
@@ -172,13 +177,18 @@ public class NeuralNetwork : IComparable<NeuralNetwork>{
                     }else if (randomNumber <= 4f){ //if 2
                       //pick random weight between -1 and 1
                         weight = UnityEngine.Random.Range(-0.5f, 0.5f);
-                    }else if (randomNumber <= 6f){ //if 3
+                        weight = Truncar(weight);
+                    }
+                    else if (randomNumber <= 6f){ //if 3
                       //randomly increase by 0% to 100%
                         float factor = UnityEngine.Random.Range(0f, 1f) + 1f;
+                        factor = Truncar(factor);
                         weight *= factor;
-                    }else if (randomNumber <= 8f){ //if 4
+                    }
+                    else if (randomNumber <= 8f){ //if 4
                       //randomly decrease by 0% to 100%
                         float factor = UnityEngine.Random.Range(0f, 1f);
+                        factor = Truncar(factor);
                         weight *= factor;
                     }
 
@@ -201,7 +211,7 @@ public class NeuralNetwork : IComparable<NeuralNetwork>{
     }
 
     public void SetWeight(float[][][] weights){
-        this.weights = weights;
+        CopyWeights(weights);
     }
 
     public float GetFitness()
@@ -214,8 +224,7 @@ public class NeuralNetwork : IComparable<NeuralNetwork>{
         return sLayer;
     }
 
-    public string GetSWeights()
-    {
+    public string GetSWeights(){
         return sWeight;
     }
 

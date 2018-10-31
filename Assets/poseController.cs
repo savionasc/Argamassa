@@ -5,6 +5,7 @@ using System;
 using UnityEngine.UI;
 using System.Data;
 using Mono.Data.SqliteClient;
+//using UnityEditor;
 
 //Class da Chita
 public class Animalx{
@@ -53,17 +54,17 @@ public class Animalx{
 
 }
 
-public class poseController : MonoBehaviour{
+public class poseController : MonoBehaviour {
     public GameObject largada;
     public GameObject chao;
     public GameObject chita;
-    public bool visualizacao = false; 
+    public bool visualizacao = false;
     List<float> fitnesses;
     List<Animalx> animals;
     bool salvouFitness = false;
 
     private int[] ct = new int[700];
-    private int evaluationTime= 440;
+    private int evaluationTime = 440;
     private int ritmo = 30;
 
     private GameObject testeColisao;
@@ -74,68 +75,72 @@ public class poseController : MonoBehaviour{
     private List<NeuralNetwork> nets;
     public bool abordagem = false;
 
-    bool simulation = false;
+    NeuralNetwork bestNet;
 
     string urlDataBase = "URI=file:MasterSQLite.db";
     IDbCommand _command;
 
-    void Awake(){
+    void Awake() {
         chita = GameObject.Find("Chita");
         largada = GameObject.Find("Largada");
     }
 
-    void Start(){
+    void Start() {
         animals = new List<Animalx>();
         fitnesses = new List<float>();
         ct[0] = 0;
         salvouFitness = false;
         inicializaDB();
-        simulation = Physics.autoSimulation;
+        bestNet = new NeuralNetwork(layers);
+        if (best) {
+            bestNet.SetWeight(consulta(2));
+        }
     }
 
-    void InitArgamassaNeuralNetworks(){
-        if (populationSize % 2 != 0){
+    void InitArgamassaNeuralNetworks() {
+        if (populationSize % 2 != 0) {
             populationSize = 20;
         }
         nets = new List<NeuralNetwork>();
-        for (int i = 0; i < populationSize; i++){
+        for (int i = 0; i < populationSize; i++) {
             NeuralNetwork net = new NeuralNetwork(layers);
             net.Mutate();
             nets.Add(net);
         }
     }
 
-    private float conversao(float X, float Xmax, float Xmin, float Ymax, float Ymin){
-        return Ymin+(((X-Xmin)/(Xmax-Xmin))*(Ymax-Ymin));
+    private float conversao(float X, float Xmax, float Xmin, float Ymax, float Ymin) {
+        return Ymin + (((X - Xmin) / (Xmax - Xmin)) * (Ymax - Ymin));
     }
 
     // Update is called once per frame
-    void Update(){
+    void Update() {
         if (visualizacao == false) {
             if (populationIterator == populationSize - 1 || generationNumber == 0)
             {
-                if (generationNumber == 0)
-                {
+                if (generationNumber == 0) {
                     InitArgamassaNeuralNetworks();
                     generationNumber++;
-                    //Debug.Log(consulta(2));
-                    nets[2].SetFitness(0f);
-                }else{
+                    nets[2].SetWeight(consulta(2));
+                } else {
                     nets.Sort();
-                    print("Pior rede: " + nets[0].GetFitness());
-                    print("Melhor rede: " + nets[nets.Count - 1].GetFitness());
-
+                    //print("Pior rede: " + nets[0].GetFitness());
+                    //print("Melhor rede: " + nets[nets.Count - 1].GetFitness());
+                    print("ciclo");
+                    deletar();
+                    inserir(2);
+                    bestNet = nets[nets.Count - 1];
                     string redes = "";
                     for (int i = 0; i < populationSize; i++)
                     {
-                        redes += " " + nets[i].GetFitness() + "|" + nets[i].nome;
+                        redes += " " + nets[i].GetFitness(); //+ "|" + nets[i].nome;
                     }
                     print("saida: " + redes);
                     for (int i = 0; i < populationSize / 2; i++)
                     {
-                        nets[i] = new NeuralNetwork(nets[i + (populationSize / 2)], false);
+                        nets[i] = new NeuralNetwork(nets[i + (populationSize / 2)]);//, false);
                         nets[i].Mutate();
-                        nets[i + (populationSize / 2)] = new NeuralNetwork(nets[i + (populationSize / 2)], true); //too lazy to write a reset neuron matrix values method....so just going to make a deepcopy lol
+                        nets[i + (populationSize / 2)] = new NeuralNetwork(nets[i + (populationSize / 2)]);//, true); //too lazy to write a reset neuron matrix values method....so just going to make a deepcopy lol
                     }
 
                     //nets[2] = rede;
@@ -151,6 +156,7 @@ public class poseController : MonoBehaviour{
                     textGeracao.text = "Geração " + generationNumber;
                     populationIterator = 0;
                 }
+                Debug.Log(consulta(2));
             }
 
             /*if (populationIterator == 2){
@@ -171,6 +177,7 @@ public class poseController : MonoBehaviour{
             {
                 criarArgamassa();
                 liberaCorpo(animals[0]);
+                //print(animals[0].net.GetSWeights());
                 esticaPernaTrasVetor(animals[0]);
                 esticaPernaFrenteVetor(animals[0]);
                 //print(nets[0].atualizar());
@@ -183,18 +190,19 @@ public class poseController : MonoBehaviour{
                     if (animals[0].torax.transform.eulerAngles.z > 180)
                     {
                         inputs[3] = conversao(animals[0].torax.transform.eulerAngles.z - 360, 90f, -90f, 0.5f, -0.5f);
-                    }else{
+                    } else {
                         inputs[3] = conversao(animals[0].torax.transform.eulerAngles.z, 90f, -90f, 0.5f, -0.5f);
                     }
 
-                    inputs[3] = conversao(inputs[3], 90f, -90f, 0.5f, -0.5f);
+                    //inputs[3] = conversao(inputs[3], 90f, -90f, 0.5f, -0.5f);
                     inputs[2] = animals[0].torax.transform.position.y - chao.transform.position.y /*Altura do tórax*/;
-                    inputs[2] = conversao(inputs[2], -1.5f, -2.8f, 0.5f, -0.5f);
+                    //print("2: " + inputs[2]);
+                    inputs[2] = conversao(inputs[2], 3.5f, 0.9f, 0.5f, -0.5f);
                     inputs[1] = animals[0].rb3.transform.position.y - chao.transform.position.y  /*Altura da pata da frente*/;
-                    inputs[1] = conversao(inputs[1], -2f, -3.88f, 0.5f, -0.5f);
+                    inputs[1] = conversao(inputs[1], 2.45f, 0.55f, 0.5f, -0.5f);
                     inputs[0] = animals[0].rb6.transform.position.y - chao.transform.position.y /*Altura da pata de trás*/;
-                    inputs[0] = conversao(inputs[0], -2f, -3.88f, 0.5f, -0.5f);
-                    //print("0: " + inputs[0] + " 1:" + inputs[1] + " 2:" + inputs[2] + " 3:" + inputs[3]);
+                    inputs[0] = conversao(inputs[0], 2.45f, 0.55f, 0.5f, -0.5f);
+                    //print("0: " + inputs[0]);
 
                     float[] output = animals[0].net.FeedForward(inputs);
                     if (output[0] > 0.4f)
@@ -223,156 +231,271 @@ public class poseController : MonoBehaviour{
                     print("Colidiu");
                     animals[0].net.SetFitness(-10);
                     testeColisao.GetComponent<MeshRenderer>().material.color = new Color(100, 0, 0, 0.5f);
-                }else{
+                } else {
                     animals[0].net.SetFitness(animals[0].chita.transform.Find("Corpo (2)").transform.position.x - largada.transform.position.x);
                 }
                 fitnesses.Add((animals[0].net.GetFitness()));
-                avaliar(0, animals[0]);
+                avaliar();
                 GameObject.Destroy(animals[0].chita.gameObject);
                 animals.Remove(animals[0]);
-            }else{
+            } else {
                 //Outro método
             }
             populationIterator++;
             Physics.autoSimulation = true;
         }
     }
-
-    void FixedUpdate(){
-        if (visualizacao){
-            if (populationIterator == populationSize - 1 || generationNumber == 0){
-                if (generationNumber == 0){
-                    InitArgamassaNeuralNetworks();
-                    generationNumber++;
-                    //Debug.Log(consulta(2));
-                    nets[2].SetFitness(0f);
-                }else{
-                    nets.Sort();
-                    print("Pior rede: " + nets[0].GetFitness());
-                    print("Melhor rede: " + nets[nets.Count - 1].GetFitness());
-
-                    string redes = "";
-                    for (int i = 0; i < populationSize; i++){
-                        redes += " " + nets[i].GetFitness() + "|" + nets[i].nome;
-                    }
-                    print("saida: " + redes);
-                    for (int i = 0; i < populationSize / 2; i++){
-                        nets[i] = new NeuralNetwork(nets[i + (populationSize / 2)], false);
-                        nets[i].Mutate();
-                        nets[i + (populationSize / 2)] = new NeuralNetwork(nets[i + (populationSize / 2)], true); //too lazy to write a reset neuron matrix values method....so just going to make a deepcopy lol
-                    }
-
-                    for (int i = 0; i < populationSize; i++){
-                        nets[i].SetFitness(0f);
-                    }
-
-                    Text textGeracao = GameObject.Find("Geracao").GetComponent<Text>();
-                    textGeracao.text = "Geração " + generationNumber;
-                    populationIterator = 0;
-                }
-            }
-
-            if (abordagem == false){
-                if (ct[0] == 0){
-                    criarArgamassa();
-                    liberaCorpo(animals[0]);
-                    esticaPernaTrasVetor(animals[0]);
-                    esticaPernaFrenteVetor(animals[0]);
+    public bool best = false;
+    public Animalx bestAnimalx;
+    void FixedUpdate() {
+        if (visualizacao) {
+            if (best) {
+                if (ct[0] == 0) {
+                    criarArgamassa(true);
+                    liberaCorpo(bestAnimalx);
+                    //print(bestAnimalx.net.GetSWeights());
+                    esticaPernaTrasVetor(bestAnimalx);
+                    esticaPernaFrenteVetor(bestAnimalx);
                     salvouFitness = false;
-                    testeColisao = animals[0].chita.transform.GetChild(13).gameObject;
+                    testeColisao = bestAnimalx.chita.transform.GetChild(13).gameObject;
                 }
                 ct[0]++;
 
-                if (animals.Count > 0){
-                    int i = 0;
-                    float[] inputs = new float[4];
-                    if (animals[0].torax.transform.eulerAngles.z > 180){
-                        inputs[3] = animals[0].torax.transform.eulerAngles.z - 360;
-                    }else{
-                        inputs[3] = animals[0].torax.transform.eulerAngles.z;
-                    }
-                    inputs[3] = conversao(inputs[3], 90f, -90f, 0.5f, -0.5f);
-                    inputs[2] = animals[0].torax.transform.position.y - chao.transform.position.y /*Altura do tórax*/;
-                    inputs[2] = conversao(inputs[2], -1.5f, -2.8f, 0.5f, -0.5f);
-                    inputs[1] = animals[0].rb3.transform.position.y - chao.transform.position.y  /*Altura da pata da frente*/;
-                    inputs[1] = conversao(inputs[1], -2f, -3.88f, 0.5f, -0.5f);
-                    inputs[0] = animals[0].rb6.transform.position.y - chao.transform.position.y /*Altura da pata de trás*/;
-                    inputs[0] = conversao(inputs[0], -2f, -3.88f, 0.5f, -0.5f);
-                    //print("0: " + inputs[0] + " 1:" + inputs[1] + " 2:" + inputs[2] + " 3:" + inputs[3]);
+                if (abordagem == false)
+                {
 
-                    float[] output = animals[0].net.FeedForward(inputs);
-                    if (output[0] > 0.4f){
-                        esticaPernaTrasVetor(animals[0]);
-                    }
+                    if (bestAnimalx.chita != null)
+                    {
+                        float[] inputs = new float[4];
+                        if (bestAnimalx.torax.transform.eulerAngles.z > 180)
+                        {
+                            inputs[3] = bestAnimalx.torax.transform.eulerAngles.z - 360;
+                        }
+                        else
+                        {
+                            inputs[3] = bestAnimalx.torax.transform.eulerAngles.z;
+                        }
+                        inputs[3] = conversao(inputs[3], 90f, -90f, 0.5f, -0.5f);
+                        inputs[3] = conversao(inputs[3], 90f, -90f, 0.5f, -0.5f);
+                        inputs[2] = bestAnimalx.torax.transform.position.y - chao.transform.position.y /*Altura do tórax*/;
+                        //print("2: " + inputs[2]);
+                        inputs[2] = conversao(inputs[2], 3.5f, 0.9f, 0.5f, -0.5f);
+                        inputs[1] = bestAnimalx.rb3.transform.position.y - chao.transform.position.y  /*Altura da pata da frente*/;
+                        inputs[1] = conversao(inputs[1], 2.45f, 0.55f, 0.5f, -0.5f);
+                        inputs[0] = bestAnimalx.rb6.transform.position.y - chao.transform.position.y /*Altura da pata de trás*/;
+                        inputs[0] = conversao(inputs[0], 2.45f, 0.55f, 0.5f, -0.5f);
+                        //print("0: " + inputs[0]);
 
-                    if (output[1] > 0.4f){
-                        esticaPernaFrenteVetor(animals[0]);
-                    }
-
-                    if (ct[i] % ritmo == 0){
-                        esticaPernaTrasVetor(animals[0]);
-                    }
-
-                    if ((ct[i] + (ritmo / 2)) % ritmo == 0){
-                        esticaPernaFrenteVetor(animals[0]);
-                    }
-
-                    if ((ct[i] > evaluationTime) && !salvouFitness){
-                        if (testeColisao.GetComponent<colisao>().colidiu == true){
-                            print("Colidiu");
-                            //animals[0].net.SetFitness(-10);
-                            animals[0].net.SetFitness(animals[0].chita.transform.Find("Corpo (2)").transform.position.x - largada.transform.position.x);
-                            testeColisao.GetComponent<MeshRenderer>().material.color = new Color(100, 0, 0, 0.5f);
-                        }else{
-                            animals[0].net.SetFitness(animals[0].chita.transform.Find("Corpo (2)").transform.position.x - largada.transform.position.x);
+                        float[] output = bestAnimalx.net.FeedForward(inputs);
+                        if (output[0] > 0.4f)
+                        {
+                            esticaPernaTrasVetor(bestAnimalx);
                         }
 
-                        fitnesses.Add((animals[0].net.GetFitness()));
-                        avaliar(0, animals[0]);
-                        GameObject.Destroy(animals[0].chita.gameObject);
-                        animals.Remove(animals[0]);
-                        salvouFitness = true;
-                        populationIterator++;
+                        if (output[1] > 0.4f)
+                        {
+                            esticaPernaFrenteVetor(bestAnimalx);
+                        }
+
+                        if (ct[0] % ritmo == 0)
+                        {
+                            esticaPernaTrasVetor(bestAnimalx);
+                        }
+
+                        if ((ct[0] + (ritmo / 2)) % ritmo == 0)
+                        {
+                            esticaPernaFrenteVetor(bestAnimalx);
+                        }
+
+                        if ((ct[0] > evaluationTime) && !salvouFitness)
+                        {
+                            if (testeColisao.GetComponent<colisao>().colidiu == true)
+                            {
+                                print("Colidiu");
+                                bestAnimalx.net.SetFitness(-10);
+                                testeColisao.GetComponent<MeshRenderer>().material.color = new Color(100, 0, 0, 0.5f);
+                            }
+                            else
+                            {
+                                bestAnimalx.net.SetFitness(bestAnimalx.chita.transform.Find("Corpo (2)").transform.position.x - largada.transform.position.x);
+                            }
+
+                            fitnesses.Add((bestAnimalx.net.GetFitness()));
+                            avaliar();
+                            GameObject.Destroy(bestAnimalx.chita.gameObject);
+                            salvouFitness = true;
+                        }
+
+                    }
+
+                    if (ct[0] > evaluationTime + 1)
+                    {
+                        ct[0] = 0;
                     }
 
 
                 }
+            } else {
+                if (populationIterator == populationSize - 1 || generationNumber == 0) {
+                    if (generationNumber == 0) {
+                        InitArgamassaNeuralNetworks();
+                        generationNumber++;
+                        //Debug.Log(consulta(2));
+                        nets[2].SetFitness(0f);
+                    } else {
+                        nets.Sort();
+                        //print("Pior rede: " + nets[0].GetFitness());
+                        //print("Melhor rede: " + nets[nets.Count - 1].GetFitness());
+                        bestNet = nets[nets.Count - 1];
 
-                if (ct[0] > evaluationTime + 1){
-                    ct[0] = 0;
+                        string redes = "";
+                        for (int i = 0; i < populationSize; i++) {
+                            redes += " " + nets[i].GetFitness();// + "|" + nets[i].nome;
+                        }
+                        print("saida: " + redes);
+                        for (int i = 0; i < populationSize / 2; i++)
+                        {
+                            nets[i] = new NeuralNetwork(nets[i + (populationSize / 2)]);//, false);
+                            nets[i].Mutate();
+                            nets[i + (populationSize / 2)] = new NeuralNetwork(nets[i + (populationSize / 2)]);//, true); //too lazy to write a reset neuron matrix values method....so just going to make a deepcopy lol
+                        }
+
+                        for (int i = 0; i < populationSize; i++)
+                        {
+                            nets[i].SetFitness(0f);
+                        }
+
+                        Text textGeracao = GameObject.Find("Geracao").GetComponent<Text>();
+                        textGeracao.text = "Geração " + generationNumber;
+                        populationIterator = 0;
+                    }
+                }
+
+                if (abordagem == false)
+                {
+                    if (ct[0] == 0)
+                    {
+                        criarArgamassa();
+                        liberaCorpo(animals[0]);
+                        esticaPernaTrasVetor(animals[0]);
+                        esticaPernaFrenteVetor(animals[0]);
+                        salvouFitness = false;
+                        testeColisao = animals[0].chita.transform.GetChild(13).gameObject;
+                    }
+                    ct[0]++;
+
+                    if (animals.Count > 0) {
+                        //EditorApplication.isPaused = true;
+                        int i = 0;
+                        float[] inputs = new float[4];
+                        if (animals[0].torax.transform.eulerAngles.z > 180) {
+                            inputs[3] = animals[0].torax.transform.eulerAngles.z - 360;
+                        }
+                        else {
+                            inputs[3] = animals[0].torax.transform.eulerAngles.z;
+                        }
+                        inputs[3] = conversao(inputs[3], 90f, -90f, 0.5f, -0.5f);
+                        inputs[2] = animals[0].torax.transform.position.y - chao.transform.position.y /*Altura do tórax*/;
+                        //print("2: " + inputs[2]);
+                        inputs[2] = conversao(inputs[2], 3.5f, 0.9f, 0.5f, -0.5f);
+                        inputs[1] = animals[0].rb3.transform.position.y - chao.transform.position.y  /*Altura da pata da frente*/;
+                        inputs[1] = conversao(inputs[1], 2.45f, 0.55f, 0.5f, -0.5f);
+                        inputs[0] = animals[0].rb6.transform.position.y - chao.transform.position.y /*Altura da pata de trás*/;
+                        inputs[0] = conversao(inputs[0], 2.45f, 0.55f, 0.5f, -0.5f);
+                        //print("0: " + inputs[0]);
+
+                        //Adicionar um if com print para mostrar na tela para verificar se alguma dessas passa do meu limite estipulado
+                        //print("0: " + inputs[0] + " 1:" + inputs[1] + " 2:" + inputs[2] + " 3:" + inputs[3]);
+
+                        float[] output = animals[0].net.FeedForward(inputs);
+                        if (output[0] > 0.4f)
+                        {
+                            esticaPernaTrasVetor(animals[0]);
+                        }
+
+                        if (output[1] > 0.4f)
+                        {
+                            esticaPernaFrenteVetor(animals[0]);
+                        }
+
+                        if (ct[i] % ritmo == 0)
+                        {
+                            esticaPernaTrasVetor(animals[0]);
+                        }
+
+                        if ((ct[i] + (ritmo / 2)) % ritmo == 0)
+                        {
+                            esticaPernaFrenteVetor(animals[0]);
+                        }
+
+                        if ((ct[i] > evaluationTime) && !salvouFitness)
+                        {
+                            if (testeColisao.GetComponent<colisao>().colidiu == true)
+                            {
+                                print("Colidiu");
+                                animals[0].net.SetFitness(-10);
+                                //animals[0].net.SetFitness(animals[0].chita.transform.Find("Corpo (2)").transform.position.x - largada.transform.position.x);
+                                testeColisao.GetComponent<MeshRenderer>().material.color = new Color(100, 0, 0, 0.5f);
+                            }
+                            else
+                            {
+                                animals[0].net.SetFitness(animals[0].chita.transform.Find("Corpo (2)").transform.position.x - largada.transform.position.x);
+                            }
+
+                            fitnesses.Add((animals[0].net.GetFitness()));
+                            avaliar();
+                            GameObject.Destroy(animals[0].chita.gameObject);
+                            animals.Remove(animals[0]);
+                            salvouFitness = true;
+                            populationIterator++;
+                        }
+
+
+                    }
+
+                    if (ct[0] > evaluationTime + 1)
+                    {
+                        ct[0] = 0;
+                    }
                 }
             }
         }
     }
 
-    public void criarArgamassa(){
-        animals.Add(new Animalx(GameObject.Instantiate(chita)));
-        // animals[animals.Count - 1].Init(nets[populationIterator]);//, hex.transform);
-        animals[animals.Count - 1].Init(nets[populationIterator]);//, hex.transform);
-
-        animals[animals.Count - 1].chita.transform.position = new Vector3(-2.16f, 0.16f, -(2f * animals.Count));
-        //animals[animals.Count - 1].chita.transform.position = new Vector3(0.0f, 0.0f, -(2f * animals.Count));
-        string name = "AAA" + animals.Count;
-        animals[animals.Count - 1].chita.name = name;
+    public void criarArgamassa(bool melhor = false) {
+        if (melhor) {
+            bestNet.SetWeight(consulta(2));
+            bestAnimalx = (new Animalx(GameObject.Instantiate(chita)));
+            bestAnimalx.Init(bestNet);
+            bestAnimalx.chita.transform.position = new Vector3(-2.16f, -0.67f, -(2f * animals.Count));
+            bestAnimalx.chita.name = "Melhor";
+        } else {
+            animals.Add(new Animalx(GameObject.Instantiate(chita)));
+            animals[animals.Count - 1].Init(nets[populationIterator]);
+            animals[animals.Count - 1].chita.transform.position = new Vector3(-2.16f, -0.67f, -(2f * animals.Count));
+            animals[animals.Count - 1].chita.name = "AAA" + animals.Count;
+        }
     }
 
-    public void liberaCorpo(Animalx animal){
-        foreach (Transform child in animal.chita.transform){
+    public void liberaCorpo(Animalx animal) {
+        foreach (Transform child in animal.chita.transform) {
             child.GetComponent<Rigidbody>().isKinematic = false;
         }
     }
 
-    public void avaliar(int i, Animalx animal){
-        //int cont,
-        //Text txCt = GameObject.Find("TextA").GetComponent<Text>();
-        //txCt.text = ("Cont: " + cont);
-        if (!salvouFitness){
+    public void avaliar() {
+        int i = 0;
+        if (!salvouFitness) {
             Text tx = GameObject.Find("TextA" + (i + 0)).GetComponent<Text>();
-            tx.text = ("Fit atual: " + (animal.chita.transform.Find("Corpo (2)").transform.position.x - largada.transform.position.x));
+            tx.text = ("Fit atual: " + fitnesses[fitnesses.Count - 1]);
             Text txFts = GameObject.Find("TextA" + (i + 1)).GetComponent<Text>();
-            txFts.text = "Fitnesses: ";
-            foreach (float fit in fitnesses){
-                txFts.text += fit + " ";
+            //txFts.text = "Fitnesses: ";
+            //foreach (float fit in fitnesses){
+            //    txFts.text += fit + " ";
+            //}
+            txFts.text += " " + fitnesses[fitnesses.Count - 1];
+            if (populationIterator == populationSize - 1) {
+                txFts.text += "\n|";
             }
         }
     }
@@ -391,19 +514,30 @@ public class poseController : MonoBehaviour{
     public string inserir(int id)
     {
         //string sql = "INSERT INTO highscores (name, score) values('ME', 5000)";
-        string sql = "INSERT INTO redes_neurais (id, layers, weights) values(" + id + ", '" + nets[2].GetSLayers() + "','" + nets[2].GetSWeights() + "')";
+        string sql = "INSERT INTO redes_neurais (id, layers, weights) values(" + id + ", '" + nets[id].GetSLayers() + "','" + nets[id].GetSWeights() + "')";
         _command.CommandText = sql;
         _command.ExecuteNonQuery();
+        print("Rede inserida: " + nets[id].GetSWeights());
         return ("Inseriu");
     }
 
-    public void consulta(int rede)
-    {
-        string sql = "SELECT id, layers, weights" + " FROM redes_neurais";
+    public string consultaPesos(int rede){
+        string sql = "SELECT weights" + " FROM redes_neurais where id = " + rede;
+        _command.CommandText = sql;
+        IDataReader reader = _command.ExecuteReader();
+        while (reader.Read()){
+            return reader.GetString(2);
+        }
+
+        return null;
+    }
+        public float[][][] consulta(int rede){
+        string sql = "SELECT id, layers, weights" + " FROM redes_neurais where id = "+rede;
         _command.CommandText = sql;
         IDataReader reader = _command.ExecuteReader();
 
-        float[][][] weights = nets[rede].GetWeights();
+        //float[][][] weights = nets[rede].GetWeights();
+        float[][][] weights = null;
         while (reader.Read())
         {
             /*
@@ -452,10 +586,9 @@ public class poseController : MonoBehaviour{
             }
             weights = weightsList.ToArray(); //convert to 3D array
         }
-
-        nets[rede].SetWeight(weights);
-        nets[rede].nome = "XXXX";
         Debug.Log("Recuperou do banco");
+
+        return weights;
     }
 
     public string atualizar()
