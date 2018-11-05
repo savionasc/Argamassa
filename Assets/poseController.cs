@@ -13,8 +13,8 @@ public class Animalx{
 	public bool pernaFrente = false;
 	public bool pernaTras = false;
 	public bool iniciado = false;
-	public GameObject Body1,Body2,Body3, Body4,Body5,Body6;
-	public Rigidbody rb1,rb2,rb3,rb4,rb5,rb6, torax;
+	public GameObject CoxaDB, CanelaDB, PeDB, CoxaEB, CanelaEB, PeEB;
+	public Rigidbody CoxaDrb, CanelaDrb, PeDrb, CoxaErb, CanelaErb, PeErb, torax;
 
     public NeuralNetwork net;
     //private bool initilized = false;
@@ -28,26 +28,25 @@ public class Animalx{
 	}
 
 	void setBody(){
-		this.Body1 = this.chita.transform.GetChild (3).gameObject;
-		this.Body2 = this.chita.transform.GetChild (4).gameObject;
-		this.Body3 = this.chita.transform.GetChild (5).gameObject;
-		this.Body4 = this.chita.transform.GetChild (6).gameObject;
-		this.Body5 = this.chita.transform.GetChild (7).gameObject;
-		this.Body6 = this.chita.transform.GetChild (8).gameObject;
+		this.CoxaDB = this.chita.transform.GetChild (3).gameObject;
+		this.CanelaDB = this.chita.transform.GetChild (4).gameObject;
+		this.PeDB = this.chita.transform.GetChild (5).gameObject;
+		this.CoxaEB = this.chita.transform.GetChild (6).gameObject;
+		this.CanelaEB = this.chita.transform.GetChild (7).gameObject;
+		this.PeEB = this.chita.transform.GetChild (8).gameObject;
 	}
 
 	void setRigibody(){
-		this.rb1 = Body1.GetComponent<Rigidbody>();
-		this.rb2 = Body2.GetComponent<Rigidbody>();
-		this.rb3 = Body3.GetComponent<Rigidbody>();
-		this.rb4 = Body4.GetComponent<Rigidbody>();
-		this.rb5 = Body5.GetComponent<Rigidbody>();
-		this.rb6 = Body6.GetComponent<Rigidbody>();
+		this.CoxaDrb = CoxaDB.GetComponent<Rigidbody>();
+		this.CanelaDrb = CanelaDB.GetComponent<Rigidbody>();
+		this.PeDrb = PeDB.GetComponent<Rigidbody>();
+		this.CoxaErb = CoxaEB.GetComponent<Rigidbody>();
+		this.CanelaErb = CanelaEB.GetComponent<Rigidbody>();
+		this.PeErb = PeEB.GetComponent<Rigidbody>();
         this.torax = this.chita.transform.GetChild(0).gameObject.GetComponent<Rigidbody>();
     }
 
-    public void Init(NeuralNetwork net){//, Transform hex){
-        //this.hex = hex;
+    public void Init(NeuralNetwork net){
         this.net = net;
         //initilized = true;
     }
@@ -198,9 +197,9 @@ public class poseController : MonoBehaviour {
                     inputs[2] = animals[0].torax.transform.position.y - chao.transform.position.y /*Altura do tórax*/;
                     //print("2: " + inputs[2]);
                     inputs[2] = conversao(inputs[2], 3.5f, 0.9f, 0.5f, -0.5f);
-                    inputs[1] = animals[0].rb3.transform.position.y - chao.transform.position.y  /*Altura da pata da frente*/;
+                    inputs[1] = animals[0].PeDrb.transform.position.y - chao.transform.position.y  /*Altura da pata da frente*/;
                     inputs[1] = conversao(inputs[1], 2.45f, 0.55f, 0.5f, -0.5f);
-                    inputs[0] = animals[0].rb6.transform.position.y - chao.transform.position.y /*Altura da pata de trás*/;
+                    inputs[0] = animals[0].PeErb.transform.position.y - chao.transform.position.y /*Altura da pata de trás*/;
                     inputs[0] = conversao(inputs[0], 2.45f, 0.55f, 0.5f, -0.5f);
                     //print("0: " + inputs[0]);
 
@@ -232,7 +231,7 @@ public class poseController : MonoBehaviour {
                     animals[0].net.SetFitness(-10);
                     testeColisao.GetComponent<MeshRenderer>().material.color = new Color(100, 0, 0, 0.5f);
                 } else {
-                    animals[0].net.SetFitness(animals[0].chita.transform.Find("Corpo (2)").transform.position.x - largada.transform.position.x);
+                    animals[0].net.SetFitness(animals[0].chita.transform.Find("Torax").transform.position.x - largada.transform.position.x);
                 }
                 fitnesses.Add((animals[0].net.GetFitness()));
                 avaliar();
@@ -280,9 +279,9 @@ public class poseController : MonoBehaviour {
                         inputs[2] = bestAnimalx.torax.transform.position.y - chao.transform.position.y /*Altura do tórax*/;
                         //print("2: " + inputs[2]);
                         inputs[2] = conversao(inputs[2], 3.5f, 0.9f, 0.5f, -0.5f);
-                        inputs[1] = bestAnimalx.rb3.transform.position.y - chao.transform.position.y  /*Altura da pata da frente*/;
+                        inputs[1] = bestAnimalx.PeDrb.transform.position.y - chao.transform.position.y  /*Altura da pata da frente*/;
                         inputs[1] = conversao(inputs[1], 2.45f, 0.55f, 0.5f, -0.5f);
-                        inputs[0] = bestAnimalx.rb6.transform.position.y - chao.transform.position.y /*Altura da pata de trás*/;
+                        inputs[0] = bestAnimalx.PeErb.transform.position.y - chao.transform.position.y /*Altura da pata de trás*/;
                         inputs[0] = conversao(inputs[0], 2.45f, 0.55f, 0.5f, -0.5f);
                         //print("0: " + inputs[0]);
 
@@ -317,7 +316,7 @@ public class poseController : MonoBehaviour {
                             }
                             else
                             {
-                                bestAnimalx.net.SetFitness(bestAnimalx.chita.transform.Find("Corpo (2)").transform.position.x - largada.transform.position.x);
+                                bestAnimalx.net.SetFitness(bestAnimalx.chita.transform.Find("Torax").transform.position.x - largada.transform.position.x);
                             }
 
                             fitnesses.Add((bestAnimalx.net.GetFitness()));
@@ -398,9 +397,9 @@ public class poseController : MonoBehaviour {
                         inputs[2] = animals[0].torax.transform.position.y - chao.transform.position.y /*Altura do tórax*/;
                         //print("2: " + inputs[2]);
                         inputs[2] = conversao(inputs[2], 3.5f, 0.9f, 0.5f, -0.5f);
-                        inputs[1] = animals[0].rb3.transform.position.y - chao.transform.position.y  /*Altura da pata da frente*/;
+                        inputs[1] = animals[0].PeDrb.transform.position.y - chao.transform.position.y  /*Altura da pata da frente*/;
                         inputs[1] = conversao(inputs[1], 2.45f, 0.55f, 0.5f, -0.5f);
-                        inputs[0] = animals[0].rb6.transform.position.y - chao.transform.position.y /*Altura da pata de trás*/;
+                        inputs[0] = animals[0].PeErb.transform.position.y - chao.transform.position.y /*Altura da pata de trás*/;
                         inputs[0] = conversao(inputs[0], 2.45f, 0.55f, 0.5f, -0.5f);
                         //print("0: " + inputs[0]);
 
@@ -434,12 +433,12 @@ public class poseController : MonoBehaviour {
                             {
                                 print("Colidiu");
                                 animals[0].net.SetFitness(-10);
-                                //animals[0].net.SetFitness(animals[0].chita.transform.Find("Corpo (2)").transform.position.x - largada.transform.position.x);
+                                //animals[0].net.SetFitness(animals[0].chita.transform.Find("Torax").transform.position.x - largada.transform.position.x);
                                 testeColisao.GetComponent<MeshRenderer>().material.color = new Color(100, 0, 0, 0.5f);
                             }
                             else
                             {
-                                animals[0].net.SetFitness(animals[0].chita.transform.Find("Corpo (2)").transform.position.x - largada.transform.position.x);
+                                animals[0].net.SetFitness(animals[0].chita.transform.Find("Torax").transform.position.x - largada.transform.position.x);
                             }
 
                             fitnesses.Add((animals[0].net.GetFitness()));
@@ -610,38 +609,38 @@ public class poseController : MonoBehaviour {
 
     public void esticaPernaFrenteVetor(Animalx animal){
         if (animal.pernaFrente == false){
-            JointSpring springJ1 = animal.rb1.GetComponent<HingeJoint>().spring; springJ1.targetPosition = -45;
-            animal.rb1.GetComponent<HingeJoint>().spring = springJ1;
-            JointSpring springJ2 = animal.rb2.GetComponent<HingeJoint>().spring; springJ2.targetPosition = 0;
-            animal.rb2.GetComponent<HingeJoint>().spring = springJ2;
-            JointSpring springJ3 = animal.rb3.GetComponent<HingeJoint>().spring; springJ3.targetPosition = 0;
-            animal.rb3.GetComponent<HingeJoint>().spring = springJ3;
+            JointSpring springJ1 = animal.CoxaDrb.GetComponent<HingeJoint>().spring; springJ1.targetPosition = -45;
+            animal.CoxaDrb.GetComponent<HingeJoint>().spring = springJ1;
+            JointSpring springJ2 = animal.CanelaDrb.GetComponent<HingeJoint>().spring; springJ2.targetPosition = 0;
+            animal.CanelaDrb.GetComponent<HingeJoint>().spring = springJ2;
+            JointSpring springJ3 = animal.PeDrb.GetComponent<HingeJoint>().spring; springJ3.targetPosition = 0;
+            animal.PeDrb.GetComponent<HingeJoint>().spring = springJ3;
         }else{
-            JointSpring springJ1 = animal.rb1.GetComponent<HingeJoint>().spring; springJ1.targetPosition = 40;
-            animal.rb1.GetComponent<HingeJoint>().spring = springJ1;
-            JointSpring springJ2 = animal.rb2.GetComponent<HingeJoint>().spring; springJ2.targetPosition = -90;
-            animal.rb2.GetComponent<HingeJoint>().spring = springJ2;
-            JointSpring springJ3 = animal.rb3.GetComponent<HingeJoint>().spring; springJ3.targetPosition = 100;
-            animal.rb3.GetComponent<HingeJoint>().spring = springJ3;
+            JointSpring springJ1 = animal.CoxaDrb.GetComponent<HingeJoint>().spring; springJ1.targetPosition = 40;
+            animal.CoxaDrb.GetComponent<HingeJoint>().spring = springJ1;
+            JointSpring springJ2 = animal.CanelaDrb.GetComponent<HingeJoint>().spring; springJ2.targetPosition = -90;
+            animal.CanelaDrb.GetComponent<HingeJoint>().spring = springJ2;
+            JointSpring springJ3 = animal.PeDrb.GetComponent<HingeJoint>().spring; springJ3.targetPosition = 100;
+            animal.PeDrb.GetComponent<HingeJoint>().spring = springJ3;
         }
         animal.pernaFrente = !animal.pernaFrente;
     }
 
     public void esticaPernaTrasVetor(Animalx animal){
         if (animal.pernaTras == false){
-            JointSpring springJ1 = animal.rb4.GetComponent<HingeJoint>().spring; springJ1.targetPosition = -45;
-            animal.rb4.GetComponent<HingeJoint>().spring = springJ1;
-            JointSpring springJ2 = animal.rb5.GetComponent<HingeJoint>().spring; springJ2.targetPosition = 0;
-            animal.rb5.GetComponent<HingeJoint>().spring = springJ2;
-            JointSpring springJ3 = animal.rb6.GetComponent<HingeJoint>().spring; springJ3.targetPosition = 0;
-            animal.rb6.GetComponent<HingeJoint>().spring = springJ3;
+            JointSpring springJ1 = animal.CoxaErb.GetComponent<HingeJoint>().spring; springJ1.targetPosition = -45;
+            animal.CoxaErb.GetComponent<HingeJoint>().spring = springJ1;
+            JointSpring springJ2 = animal.CanelaErb.GetComponent<HingeJoint>().spring; springJ2.targetPosition = 0;
+            animal.CanelaErb.GetComponent<HingeJoint>().spring = springJ2;
+            JointSpring springJ3 = animal.PeErb.GetComponent<HingeJoint>().spring; springJ3.targetPosition = 0;
+            animal.PeErb.GetComponent<HingeJoint>().spring = springJ3;
         }else{
-            JointSpring springJ1 = animal.rb4.GetComponent<HingeJoint>().spring; springJ1.targetPosition = 40;
-            animal.rb4.GetComponent<HingeJoint>().spring = springJ1;
-            JointSpring springJ2 = animal.rb5.GetComponent<HingeJoint>().spring; springJ2.targetPosition = -90;
-            animal.rb5.GetComponent<HingeJoint>().spring = springJ2;
-            JointSpring springJ3 = animal.rb6.GetComponent<HingeJoint>().spring; springJ3.targetPosition = 100;
-            animal.rb6.GetComponent<HingeJoint>().spring = springJ3;
+            JointSpring springJ1 = animal.CoxaErb.GetComponent<HingeJoint>().spring; springJ1.targetPosition = 40;
+            animal.CoxaErb.GetComponent<HingeJoint>().spring = springJ1;
+            JointSpring springJ2 = animal.CanelaErb.GetComponent<HingeJoint>().spring; springJ2.targetPosition = -90;
+            animal.CanelaErb.GetComponent<HingeJoint>().spring = springJ2;
+            JointSpring springJ3 = animal.PeErb.GetComponent<HingeJoint>().spring; springJ3.targetPosition = 100;
+            animal.PeErb.GetComponent<HingeJoint>().spring = springJ3;
         }
         animal.pernaTras = !animal.pernaTras;
     }
