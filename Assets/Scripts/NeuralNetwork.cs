@@ -8,7 +8,7 @@ public class NeuralNetwork : IComparable<NeuralNetwork>{
     private int[] layers; //layers
     private string sLayer = "";
     private float[][] neurons; //neuron matix
-    private float[][][] weights; //weight matrix
+    private float[][][] weights = null; //weight matrix
     private string sWeight = "";
     private float fitness; //fitness of the network
     //private static string[] m_HardCodedStrings = new string[]
@@ -147,7 +147,7 @@ public class NeuralNetwork : IComparable<NeuralNetwork>{
                 for (int k = 0; k < neurons[i - 1].Length; k++){
                     value += weights[i - 1][j][k] * neurons[i - 1][k]; //sum off all weights connections of this neuron weight their values in previous layer
                 }
-                neurons[i][j] = Truncar((float)Math.Tanh(value)); //Hyperbolic tangent activation //é necessário truncar?
+                neurons[i][j] = (float)Math.Tanh(value); //Hyperbolic tangent activation
             }
         }
         return neurons[neurons.Length - 1]; //return output layer
@@ -211,6 +211,9 @@ public class NeuralNetwork : IComparable<NeuralNetwork>{
     }
 
     public void SetWeight(float[][][] weights){
+        if (this.weights == null){
+            InitWeights();
+        }
         CopyWeights(weights);
     }
 

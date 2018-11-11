@@ -57,13 +57,13 @@ public class poseController : MonoBehaviour {
     public GameObject largada;
     public GameObject chao;
     public GameObject chita;
-    public bool visualizacao = false;
     List<float> fitnesses;
     List<Animalx> animals;
     bool salvouFitness = false;
 
     private int ct = 0;
-    private int evaluationTime = 440;
+    public int evaluationTime = 440;
+    public bool visualizacao = false;
     private int ritmo = 30;
 
     private GameObject testeColisao;
@@ -87,12 +87,11 @@ public class poseController : MonoBehaviour {
     void Start() {
         animals = new List<Animalx>();
         fitnesses = new List<float>();
-        //ct = 0;
         salvouFitness = false;
         inicializaDB();
         bestNet = new NeuralNetwork(layers);
         if (best) {
-            bestNet.SetWeight(consulta(2));
+            bestNet.SetWeight(consulta(19));
         }
     }
 
@@ -112,38 +111,35 @@ public class poseController : MonoBehaviour {
         return Ymin + (((X - Xmin) / (Xmax - Xmin)) * (Ymax - Ymin));
     }
 
-    void iteracaoRedeNeural()
-    {
-        if (populationIterator == populationSize - 1 || generationNumber == 0)
-        {
-            if (generationNumber == 0)
-            {
+    void iteracaoRedeNeural(){
+        if (populationIterator == populationSize - 1 || generationNumber == 0){
+            if (generationNumber == 0){
                 InitArgamassaNeuralNetworks();
                 generationNumber++;
-                nets[2].SetWeight(consulta(2));
-            }
-            else
-            {
+                for (int i = 0; i < populationSize; i++){
+                    nets[i].SetWeight(consulta(19));
+                }
+                print("iniciou rede");
+            }else{
                 nets.Sort();
                 //print("Pior rede: " + nets[0].GetFitness());
                 //print("Melhor rede: " + nets[nets.Count - 1].GetFitness());
                 print("ciclo");
-                //deletar();
-                //inserir(2);
                 bestNet = nets[nets.Count - 1];
                 string redes = "";
-                for (int i = 0; i < populationSize; i++)
+                for (int i = 0; i < populationSize-1; i++)
                 {
                     redes += " " + nets[i].GetFitness(); //+ "|" + nets[i].nome;
                 }
                 print("saida: " + redes);
-                for (int i = 0; i < populationSize / 2; i++)
-                {
+                for (int i = 0; i < populationSize / 2; i++){
                     nets[i] = new NeuralNetwork(nets[i + (populationSize / 2)]);//, false);
                     nets[i].Mutate();
                     nets[i + (populationSize / 2)] = new NeuralNetwork(nets[i + (populationSize / 2)]);//, true); //too lazy to write a reset neuron matrix values method....so just going to make a deepcopy lol
                 }
 
+                print(deletar());
+                inserir(nets.Count - 1);
                 //nets[2] = rede;
 
                 for (int i = 0; i < populationSize; i++)
@@ -153,24 +149,25 @@ public class poseController : MonoBehaviour {
                 }
 
                 //fitnesses.Add(0f);
+                generationNumber++;
                 Text textGeracao = GameObject.Find("Geracao").GetComponent<Text>();
                 textGeracao.text = "Geração " + generationNumber;
                 populationIterator = 0;
-                //nets[2].SetWeight(consulta(2));
+                //nets[2].SetWeight(consulta(19));
             }
-            //Debug.Log(consulta(2));
+            //Debug.Log(consulta(19));
         }
 
-        /*if (populationIterator == 2){
+        /*if (populationIterator == 19){
             //if (ia == 0){
             //    print(deletar());
-            //    print(inserir(2));
+            //    print(inserir(19));
             //    ia++;
             //}
 
-            //Debug.Log(nets[2].consulta().ToString("0.000000000000"));
-            Debug.Log(consulta(2));
-            nets[2].SetFitness(0f);
+            //Debug.Log(nets[19].consulta().ToString("0.000000000000"));
+            Debug.Log(consulta(19));
+            nets[19].SetFitness(0f);
         }*/
     }
 
@@ -205,13 +202,17 @@ public class poseController : MonoBehaviour {
         //print("0: " + inputs[0] + " 1:" + inputs[1] + " 2:" + inputs[2] + " 3:" + inputs[3]);
 
         float[] output = animals[0].net.FeedForward(inputs);
-        if (output[0] > 0.4f)
+        if (output[0] > 0.00000000004f)
         {
+            //print("XXXXXXXXXXXXXXXX");
+            //print("Z" + output[0] + "Y: " + output[1]);
             esticaPernaTrasVetor(animals[0]);
         }
 
-        if (output[1] > 0.4f)
+        if (output[1] > 0.00000000004f)
         {
+            //print("YYYYYYYYYYYYYYYYYYY");
+            //print("Z" + output[0] + "Y: " + output[1]);
             esticaPernaFrenteVetor(animals[0]);
         }
 
@@ -294,11 +295,13 @@ public class poseController : MonoBehaviour {
                         //print("0: " + inputs[0]);
 
                         float[] output = bestAnimalx.net.FeedForward(inputs);
-                        if (output[0] > 0.4f){
+                        if (output[0] > 0.00000000004f)
+                        {
                             esticaPernaTrasVetor(bestAnimalx);
                         }
 
-                        if (output[1] > 0.4f){
+                        if (output[1] > 0.00000000004f)
+                        {
                             esticaPernaFrenteVetor(bestAnimalx);
                         }
 
@@ -373,14 +376,14 @@ public class poseController : MonoBehaviour {
     public void criarArgamassa(bool melhor = false) {
         if (melhor) {
             print("X - Melhor");
-            bestNet.SetWeight(consulta(2));
+            bestNet.SetWeight(consulta(19));
             bestAnimalx = (new Animalx(GameObject.Instantiate(chita)));
             bestAnimalx.Init(bestNet);
             bestAnimalx.chita.transform.position = new Vector3(-2.16f, -0.67f, -(2f * 1));
             bestAnimalx.chita.name = "Melhor";
         } else {
             animals.Add(new Animalx(GameObject.Instantiate(chita)));
-            animals[animals.Count - 1].Init(nets[2]);
+            animals[animals.Count - 1].Init(nets[populationIterator]);
             animals[animals.Count - 1].chita.transform.position = new Vector3(-2.16f, -0.67f, -(2f * animals.Count));
             animals[animals.Count - 1].chita.name = "AAA" + animals.Count;
         }
@@ -441,46 +444,24 @@ public class poseController : MonoBehaviour {
         _command.CommandText = sql;
         IDataReader reader = _command.ExecuteReader();
 
-        //float[][][] weights = nets[rede].GetWeights();
         float[][][] weights = null;
-        while (reader.Read())
-        {
-            /*
-            //layers
-            string layer = reader.GetString(1);
-            string[] layerSplit = layer.Split(new string[] { " " }, StringSplitOptions.None);
-            this.layers = new int[layerSplit.Length-1];
-            for (int i = 0; i < layerSplit.Length; i++){
-                int result;
-                if (int.TryParse(layerSplit[i], out result)){
-                    layers[i] = result;
-                }
-            }
-            //neurons
-            InitNeurons();*/
-
-            //Falta iniciar os pesos
-            //weights
+        while (reader.Read()){
             string weigh = reader.GetString(2);
             string[] weightSplit = weigh.Split(new string[] { " Y " }, StringSplitOptions.None);
             List<float[][]> weightsList = new List<float[][]>();
-            for (int i = 0; i < weightSplit.Length - 1; i++)
-            {
+            for (int i = 0; i < weightSplit.Length - 1; i++){
                 List<float[]> layerWeightsList = new List<float[]>();
                 int neuronsInPreviousLayer = layers[i];
                 //4
                 string[] xSplit = weightSplit[i].Split(new string[] { " X " }, StringSplitOptions.None);
-                for (int j = 0; j < xSplit.Length - 1; j++)
-                {
+                for (int j = 0; j < xSplit.Length - 1; j++){
                     float[] neuronWeights = new float[neuronsInPreviousLayer]; //neruons weights
                                                                                //5
                     string[] ySplit = xSplit[j].Split(new string[] { " " }, StringSplitOptions.None);
-                    for (int k = 0; k < ySplit.Length - 1; k++)
-                    {
+                    for (int k = 0; k < ySplit.Length - 1; k++){
                         //4
                         float result;
-                        if (float.TryParse(ySplit[k], out result))
-                        {
+                        if (float.TryParse(ySplit[k], out result)){
                             neuronWeights[k] = result;
                             //retorno += "Peso: " + weights[i][j][k] + "\n";
                         }
