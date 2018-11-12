@@ -70,10 +70,9 @@ public class poseController : MonoBehaviour {
     private int populationSize = 1;
     private int populationIterator = 0;
     private int generationNumber = 0;
-    private int[] layers = new int[] { 4, 5, 5, 2 }; //1 input and 1 output
     private List<NeuralNetwork> nets;
     public bool abordagem = false;
-
+    private int[] layers;
     NeuralNetwork bestNet;
 
     string urlDataBase = "URI=file:MasterSQLite.db";
@@ -89,6 +88,11 @@ public class poseController : MonoBehaviour {
         fitnesses = new List<float>();
         salvouFitness = false;
         inicializaDB();
+        if (!abordagem){
+            layers = new int[] { 4, 5, 5, 2 }; //1 input and 1 output
+        }else{
+            layers = new int[] { 4, 5, 5, 6 }; //1 input and 1 output
+        }
         bestNet = new NeuralNetwork(layers);
         if (best) {
             bestNet.SetWeight(consulta(19));
@@ -127,8 +131,7 @@ public class poseController : MonoBehaviour {
                 print("ciclo");
                 bestNet = nets[nets.Count - 1];
                 string redes = "";
-                for (int i = 0; i < populationSize-1; i++)
-                {
+                for (int i = 0; i < populationSize-1; i++){
                     redes += " " + nets[i].GetFitness(); //+ "|" + nets[i].nome;
                 }
                 print("saida: " + redes);
@@ -139,16 +142,12 @@ public class poseController : MonoBehaviour {
                 }
 
                 print(deletar());
-                inserir(nets.Count - 1);
-                //nets[2] = rede;
 
-                for (int i = 0; i < populationSize; i++)
-                {
-                    //print("Fit: " + nets[i].GetFitness());
+                for (int i = 0; i < populationSize; i++){
+                    inserir(i);
                     nets[i].SetFitness(0f);
                 }
 
-                //fitnesses.Add(0f);
                 generationNumber++;
                 Text textGeracao = GameObject.Find("Geracao").GetComponent<Text>();
                 textGeracao.text = "Geração " + generationNumber;
@@ -190,27 +189,30 @@ public class poseController : MonoBehaviour {
 
         inputs[3] = conversao(inputs[3], 90f, -90f, 0.5f, -0.5f);
         inputs[2] = animals[0].torax.transform.position.y - chao.transform.position.y /*Altura do tórax*/;
-        //print("2: " + inputs[2]);
-        inputs[2] = conversao(inputs[2], 3.5f, 0.9f, 0.5f, -0.5f);
+        inputs[2] = conversao(inputs[2], 3.7f, 0.7f, 0.5f, -0.5f);
         inputs[1] = animals[0].PeDrb.transform.position.y - chao.transform.position.y  /*Altura da pata da frente*/;
-        inputs[1] = conversao(inputs[1], 2.45f, 0.55f, 0.5f, -0.5f);
+        inputs[1] = conversao(inputs[1], 3.3f, -0.3f, 0.5f, -0.5f);
         inputs[0] = animals[0].PeErb.transform.position.y - chao.transform.position.y /*Altura da pata de trás*/;
-        inputs[0] = conversao(inputs[0], 2.45f, 0.55f, 0.5f, -0.5f);
-        //print("0: " + inputs[0]);
+        inputs[0] = conversao(inputs[0], 3.3f, -0.3f, 0.5f, -0.5f);
 
-        //Adicionar um if com print para mostrar na tela para verificar se alguma dessas passa do meu limite estipulado
-        //print("0: " + inputs[0] + " 1:" + inputs[1] + " 2:" + inputs[2] + " 3:" + inputs[3]);
+        /*if (inputs[0] > 0.5f || inputs[0] < -0.5f){
+            print("Passou NO INPUT[0]: " + inputs[0]);
+        }else if(inputs[1] > 0.5f || inputs[1] < -0.5f){
+            print("Passou NO INPUT[1]: " + inputs[1]);
+        }else if (inputs[2] > 0.5f || inputs[2] < -0.5f){
+            print("Passou NO INPUT[2]: " + inputs[2]);
+        }else if (inputs[3] > 0.5f || inputs[3] < -0.5f){
+            print("Passou NO INPUT[3]: " + inputs[3]);
+        }*/
 
         float[] output = animals[0].net.FeedForward(inputs);
-        if (output[0] > 0.00000000004f)
-        {
+        if (output[0] > 0.00000000004f){
             //print("XXXXXXXXXXXXXXXX");
             //print("Z" + output[0] + "Y: " + output[1]);
             esticaPernaTrasVetor(animals[0]);
         }
 
-        if (output[1] > 0.00000000004f)
-        {
+        if (output[1] > 0.00000000004f){
             //print("YYYYYYYYYYYYYYYYYYY");
             //print("Z" + output[0] + "Y: " + output[1]);
             esticaPernaFrenteVetor(animals[0]);
@@ -241,8 +243,7 @@ public class poseController : MonoBehaviour {
                     entradaSaidaRede();
                     Physics.Simulate(Time.fixedDeltaTime);
                 }
-                if (testeColisao.GetComponent<colisao>().colidiu == true)
-                {
+                if (testeColisao.GetComponent<colisao>().colidiu == true){
                     print("Colidiu");
                     animals[0].net.SetFitness(-10);
                     testeColisao.GetComponent<MeshRenderer>().material.color = new Color(100, 0, 0, 0.5f);
@@ -286,22 +287,18 @@ public class poseController : MonoBehaviour {
                         }
                         inputs[3] = conversao(inputs[3], 90f, -90f, 0.5f, -0.5f);
                         inputs[2] = bestAnimalx.torax.transform.position.y - chao.transform.position.y /*Altura do tórax*/;
-                        //print("2: " + inputs[2]);
-                        inputs[2] = conversao(inputs[2], 3.5f, 0.9f, 0.5f, -0.5f);
+                        inputs[2] = conversao(inputs[2], 3.7f, 0.7f, 0.5f, -0.5f);
                         inputs[1] = bestAnimalx.PeDrb.transform.position.y - chao.transform.position.y  /*Altura da pata da frente*/;
-                        inputs[1] = conversao(inputs[1], 2.45f, 0.55f, 0.5f, -0.5f);
+                        inputs[1] = conversao(inputs[1], 3.3f, -0.3f, 0.5f, -0.5f);
                         inputs[0] = bestAnimalx.PeErb.transform.position.y - chao.transform.position.y /*Altura da pata de trás*/;
-                        inputs[0] = conversao(inputs[0], 2.45f, 0.55f, 0.5f, -0.5f);
-                        //print("0: " + inputs[0]);
+                        inputs[0] = conversao(inputs[0], 3.3f, -0.3f, 0.5f, -0.5f);
 
                         float[] output = bestAnimalx.net.FeedForward(inputs);
-                        if (output[0] > 0.00000000004f)
-                        {
+                        if (output[0] > 0.00000000004f){
                             esticaPernaTrasVetor(bestAnimalx);
                         }
 
-                        if (output[1] > 0.00000000004f)
-                        {
+                        if (output[1] > 0.00000000004f){
                             esticaPernaFrenteVetor(bestAnimalx);
                         }
 
@@ -408,8 +405,7 @@ public class poseController : MonoBehaviour {
         }
     }
 
-    public void inicializaDB()
-    {
+    public void inicializaDB(){
         IDbConnection _connection = new SqliteConnection(urlDataBase);
         _command = _connection.CreateCommand();
         _connection.Open();
@@ -419,9 +415,7 @@ public class poseController : MonoBehaviour {
         _command.ExecuteNonQuery();
     }
 
-    public string inserir(int id)
-    {
-        //string sql = "INSERT INTO highscores (name, score) values('ME', 5000)";
+    public string inserir(int id){
         string sql = "INSERT INTO redes_neurais (id, layers, weights) values(" + id + ", '" + nets[id].GetSLayers() + "','" + nets[id].GetSWeights() + "')";
         _command.CommandText = sql;
         _command.ExecuteNonQuery();
@@ -472,7 +466,7 @@ public class poseController : MonoBehaviour {
             }
             weights = weightsList.ToArray(); //convert to 3D array
         }
-        Debug.Log("Recuperou do banco");
+        //Debug.Log("Recuperou do banco");
 
         return weights;
     }
