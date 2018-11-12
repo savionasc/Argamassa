@@ -206,26 +206,27 @@ public class poseController : MonoBehaviour {
         }*/
 
         float[] output = animals[0].net.FeedForward(inputs);
-        if (output[0] > 0.00000000004f){
-            //print("XXXXXXXXXXXXXXXX");
-            //print("Z" + output[0] + "Y: " + output[1]);
-            esticaPernaTrasVetor(animals[0]);
-        }
+        if (!abordagem){
+            if (output[0] > 0.00000000004f){
+                //print("XXXXXXXXXXXXXXXX"); print("Z" + output[0] + "Y: " + output[1]);
+                esticaPernaTrasVetor(animals[0]);
+            }
 
-        if (output[1] > 0.00000000004f){
-            //print("YYYYYYYYYYYYYYYYYYY");
-            //print("Z" + output[0] + "Y: " + output[1]);
-            esticaPernaFrenteVetor(animals[0]);
-        }
+            if (output[1] > 0.00000000004f){
+                //print("YYYYYYYYYYYYYYYYYYY"); print("Z" + output[0] + "Y: " + output[1]);
+                esticaPernaFrenteVetor(animals[0]);
+            }
 
-        if (ct % ritmo == 0)
-        {
-            esticaPernaTrasVetor(animals[0]);
-        }
+            if (ct % ritmo == 0){
+                esticaPernaTrasVetor(animals[0]);
+            }
 
-        if ((ct + (ritmo / 2)) % ritmo == 0)
-        {
-            esticaPernaFrenteVetor(animals[0]);
+            if ((ct + (ritmo / 2)) % ritmo == 0){
+                esticaPernaFrenteVetor(animals[0]);
+            }
+        }else{
+            esticaPernaFrente(animals[0], output[0] * 180, output[1] * 180, output[2] * 180);
+            esticaPernaTras(animals[0], output[3] * 180, output[4] * 180, output[5] * 180);
         }
     }
 
@@ -236,7 +237,7 @@ public class poseController : MonoBehaviour {
 
             Physics.autoSimulation = false;
 
-            if (abordagem == false){
+            //if (abordagem == false){
                 instanciacaoPersonagem();
                 for (ct = 1; ct <= evaluationTime; ct++){
 
@@ -254,9 +255,9 @@ public class poseController : MonoBehaviour {
                 avaliar();
                 GameObject.Destroy(animals[0].chita.gameObject);
                 animals.Remove(animals[0]);
-            } else {
+            //} else {
                 //Outro método
-            }
+            //}
             populationIterator++;
             Physics.autoSimulation = true;
         }
@@ -333,7 +334,7 @@ public class poseController : MonoBehaviour {
             } else {
                 iteracaoRedeNeural();
 
-                if (abordagem == false){
+                //if (abordagem == false){
                     if (ct == 0){
                         instanciacaoPersonagem();
                         salvouFitness = false;
@@ -365,7 +366,7 @@ public class poseController : MonoBehaviour {
                     if (ct > evaluationTime + 1){
                         ct = 0;
                     }
-                }
+                //}
             }
         }
     }
@@ -433,7 +434,7 @@ public class poseController : MonoBehaviour {
 
         return null;
     }
-        public float[][][] consulta(int rede){
+    public float[][][] consulta(int rede){
         string sql = "SELECT id, layers, weights" + " FROM redes_neurais where id = "+rede;
         _command.CommandText = sql;
         IDataReader reader = _command.ExecuteReader();
@@ -476,7 +477,7 @@ public class poseController : MonoBehaviour {
         //string sql = "UPDATE redes_neurais set id = 1 WHERE id != 0";
         //_command.CommandText = sql;
         //_command.ExecuteNonQuery();
-        return ("   Atualizou!");
+        return ("Atualizou!");
     }
 
     public string deletar()
@@ -526,8 +527,31 @@ public class poseController : MonoBehaviour {
         animal.pernaTras = !animal.pernaTras;
     }
 
-    //void FixedUpdate()
-    //{
+    public void esticaPernaFrente(Animalx animal, float coxa, float canela, float pe){
+        coxa = (360 + coxa) % 360;
+        canela = (360 + canela) % 360;
+        pe = (360 + pe) % 360;
+        JointSpring springJ1 = animal.CoxaDrb.GetComponent<HingeJoint>().spring; springJ1.targetPosition = Mathf.Floor(coxa);
+        animal.CoxaDrb.GetComponent<HingeJoint>().spring = springJ1;
+        JointSpring springJ2 = animal.CanelaDrb.GetComponent<HingeJoint>().spring; springJ2.targetPosition = Mathf.Floor(canela);
+        animal.CanelaDrb.GetComponent<HingeJoint>().spring = springJ2;
+        JointSpring springJ3 = animal.PeDrb.GetComponent<HingeJoint>().spring; springJ3.targetPosition = Mathf.Floor(pe);
+        animal.PeDrb.GetComponent<HingeJoint>().spring = springJ3;
+    }
+
+    public void esticaPernaTras(Animalx animal, float coxa, float canela, float pe){
+        coxa = (360 + coxa) % 360;
+        canela = (360 + canela) % 360;
+        pe = (360 + pe) % 360;
+        JointSpring springJ1 = animal.CoxaErb.GetComponent<HingeJoint>().spring; springJ1.targetPosition = Mathf.Floor(coxa);
+        animal.CoxaErb.GetComponent<HingeJoint>().spring = springJ1;
+        JointSpring springJ2 = animal.CanelaErb.GetComponent<HingeJoint>().spring; springJ2.targetPosition = Mathf.Floor(canela);
+        animal.CanelaErb.GetComponent<HingeJoint>().spring = springJ2;
+        JointSpring springJ3 = animal.PeErb.GetComponent<HingeJoint>().spring; springJ3.targetPosition = Mathf.Floor(pe);
+        animal.PeErb.GetComponent<HingeJoint>().spring = springJ3;
+    }
+
+    //void FixedUpdate(){
     //    //print(Time.fixedDeltaTime);
     //    //print(Time.deltaTime);
 
