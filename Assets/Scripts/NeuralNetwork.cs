@@ -202,12 +202,11 @@ public class NeuralNetwork : IComparable<NeuralNetwork>{
     }
 
     public void AddFitness(float fit){
-        fitness += fit;
+        fitness += fit; //Truncar(fit);
     }
 
-    public void SetFitness(float fit)
-    {
-        fitness = fit;
+    public void SetFitness(float fit){
+        fitness = fit; //Truncar(fit);
     }
 
     public void SetWeight(float[][][] weights){
