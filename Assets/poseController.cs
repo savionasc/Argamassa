@@ -131,7 +131,7 @@ public class poseController : MonoBehaviour {
                 print("ciclo");
                 bestNet = nets[nets.Count - 1];
                 string redes = "";
-                for (int i = 0; i < populationSize-1; i++){
+                for (int i = 0; i < populationSize; i++){
                     redes += " " + nets[i].GetFitness(); //+ "|" + nets[i].nome;
                 }
                 print("saida: " + redes);
@@ -207,17 +207,17 @@ public class poseController : MonoBehaviour {
 
         float[] output = animals[0].net.FeedForward(inputs);
         if (!abordagem){
-            if (output[0] > 0.00000000004f){
+            if (output[0] > 0f){
                 //print("XXXXXXXXXXXXXXXX"); print("Z" + output[0] + "Y: " + output[1]);
                 esticaPernaTrasVetor(animals[0]);
             }
 
-            if (output[1] > 0.00000000004f){
+            if (output[1] > 0f){
                 //print("YYYYYYYYYYYYYYYYYYY"); print("Z" + output[0] + "Y: " + output[1]);
                 esticaPernaFrenteVetor(animals[0]);
             }
 
-            if (ct % ritmo == 0){
+            if (ct % ritmo == 0f){
                 esticaPernaTrasVetor(animals[0]);
             }
 
@@ -295,11 +295,11 @@ public class poseController : MonoBehaviour {
                         inputs[0] = conversao(inputs[0], 3.3f, -0.3f, 0.5f, -0.5f);
 
                         float[] output = bestAnimalx.net.FeedForward(inputs);
-                        if (output[0] > 0.00000000004f){
+                        if (output[0] > 0f){
                             esticaPernaTrasVetor(bestAnimalx);
                         }
 
-                        if (output[1] > 0.00000000004f){
+                        if (output[1] > 0f){
                             esticaPernaFrenteVetor(bestAnimalx);
                         }
 
@@ -401,7 +401,7 @@ public class poseController : MonoBehaviour {
             Text txFts = GameObject.Find("TextA" + (i + 1)).GetComponent<Text>();
             txFts.text += " " + fitnesses[fitnesses.Count - 1];
             if (populationIterator == populationSize - 2) {
-                txFts.text += " |G: "+generationNumber+ "|\n";
+                txFts.text += "\n|G: " + (generationNumber+1)+ "|\n";
             }
         }
     }

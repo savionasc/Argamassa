@@ -182,14 +182,14 @@ public class NeuralNetwork : IComparable<NeuralNetwork>{
                     else if (randomNumber <= 6f){ //if 3
                       //randomly increase by 0% to 100%
                         float factor = UnityEngine.Random.Range(0f, 1f) + 1f;
-                        factor = Truncar(factor);
                         weight *= factor;
+                        weight = Truncar(weight);
                     }
                     else if (randomNumber <= 8f){ //if 4
                       //randomly decrease by 0% to 100%
                         float factor = UnityEngine.Random.Range(0f, 1f);
-                        factor = Truncar(factor);
                         weight *= factor;
+                        weight = Truncar(weight);
                     }
 
                     weights[i][j][k] = weight;
