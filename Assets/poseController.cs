@@ -87,7 +87,7 @@ public class poseController : MonoBehaviour {
         }
         bestNet = new NeuralNetwork(layers);
         if (best) {
-            bestNet.SetWeight(consulta(19));
+            bestNet.SetWeight(consulta(21));
         }
     }
 
@@ -107,8 +107,21 @@ public class poseController : MonoBehaviour {
         return Ymin + (((X - Xmin) / (Xmax - Xmin)) * (Ymax - Ymin));
     }
 
+    private void visualizarMelhor(){
+        oncebest[0] = true;
+        if (visualizacao){
+            oncebest[1] = true;
+        }else{
+            oncebest[1] = false;
+        }
+        best = true;
+        visualizacao = true;
+        ct = 0;
+        bestNet = nets[nets.Count - 1];
+    }
+
     void iteracaoRedeNeural(){
-        if (populationIterator == populationSize || generationNumber == 0){
+        if (populationIterator == populationSize || generationNumber == 0){ //Verificar se não desregulou o fitness na visualização
             if (generationNumber == 0){
                 InitArgamassaNeuralNetworks();
                 generationNumber++;
@@ -123,10 +136,11 @@ public class poseController : MonoBehaviour {
                 nets.Sort();
                 fitnesses.Sort();
                 avaliarTotal();
+                print("avaliarTotal");
+                visualizarMelhor();
                 //print("Pior rede: " + nets[0].GetFitness());
                 //print("Melhor rede: " + nets[nets.Count - 1].GetFitness());
                 print("ciclo");
-                bestNet = nets[nets.Count - 1];
                 string redes = "";
                 for (int i = 0; i < populationSize; i++){
                     redes += " " + nets[i].GetFitness(); //+ "|" + nets[i].nome;
@@ -135,7 +149,6 @@ public class poseController : MonoBehaviour {
 
                 print(deletar());
 
-                print("P: " + populationSize);
                 for (int i = 0; i < populationSize; i++){
                     inserir(i);
                     nets[i].SetFitness(0f);
@@ -237,30 +250,37 @@ public class poseController : MonoBehaviour {
             Physics.autoSimulation = false;
 
             //if (abordagem == false){
-                instanciacaoPersonagem();
-                for (ct = 1; ct <= evaluationTime; ct++){
-
-                    entradaSaidaRede();
-                    Physics.Simulate(Time.fixedDeltaTime);
-                }
-                if (testeColisao.GetComponent<colisao>().colidiu == true){
-                    print("Colidiu");
-                    nets[populationIterator].SetFitness(-100f);
-                    testeColisao.GetComponent<MeshRenderer>().material.color = new Color(100, 0, 0, 0.5f);
-                } else {
-                    nets[populationIterator].SetFitness(animals[0].chita.transform.Find("Torax").transform.position.x - largada.transform.position.x);
-                }
-                fitnesses.Add((nets[populationIterator].GetFitness()));
-                //avaliar();
-                GameObject.Destroy(animals[0].chita.gameObject);
-                animals.Remove(animals[0]);
+            instanciacaoPersonagem();
+            for (ct = 1; ct <= evaluationTime; ct++)
+            {
+                entradaSaidaRede();
+                Physics.Simulate(Time.fixedDeltaTime);
+            }
+            if (testeColisao.GetComponent<colisao>().colidiu == true)
+            {
+                print("Colidiu");
+                nets[populationIterator].SetFitness(-100f);
+                testeColisao.GetComponent<MeshRenderer>().material.color = new Color(100, 0, 0, 0.5f);
+            }
+            else
+            {
+                nets[populationIterator].SetFitness(animals[0].chita.transform.Find("Torax").transform.position.x - largada.transform.position.x);
+            }
+            fitnesses.Add((nets[populationIterator].GetFitness()));
+            //avaliar();
+            GameObject.Destroy(animals[0].chita.gameObject);
+            animals.Remove(animals[0]);
             //} else {
-                //Outro método
+            //Outro método
             //}
             populationIterator++;
             Physics.autoSimulation = true;
+            ct = 0;
         }
     }
+    //true, true para visualizar o melhor com visualizacao == true antes de mostrar o melhor
+    //true, false para visualizar o melhor com visualizacao == false antes de mostrar o melhor
+    public bool[] oncebest = { false, false };
     public bool best = false;
     public Animalx bestAnimalx;
     void FixedUpdate() {
@@ -274,9 +294,10 @@ public class poseController : MonoBehaviour {
                     esticaPernaFrenteVetor(bestAnimalx);
                     salvouFitness = false;
                     testeColisao = bestAnimalx.chita.transform.GetChild(13).gameObject;
+                    print("Entrou com ct: "+ct);
                 }
                 ct++;
-
+                print("meu ct++: "+ct);
                 if (abordagem == false){
                     if (bestAnimalx.chita != null){
                         float[] inputs = new float[4];
@@ -320,6 +341,7 @@ public class poseController : MonoBehaviour {
                             }
                             fitnesses.Add(bestNet.GetFitness());
                             //avaliar();
+                            print("Fitness da best: "+ bestNet.GetFitness());
                             GameObject.Destroy(bestAnimalx.chita.gameObject);
                             salvouFitness = true;
                         }
@@ -327,19 +349,32 @@ public class poseController : MonoBehaviour {
 
                     if (ct > evaluationTime + 1){
                         ct = 0;
+                        if (oncebest[0]){
+                            best = false;
+                            if (!oncebest[1]){
+                                visualizacao = false;
+                            }
+                        }
+
                     }
                 }
             } else {
                 iteracaoRedeNeural();
-
                 //if (abordagem == false){
                     if (ct == 0){
                         instanciacaoPersonagem();
                         salvouFitness = false;
                     }
                     ct++;
-
+                    print("CT: "+ct);
                     if (animals.Count > 0) {
+                        if (ct == 1){
+                        Component[] hingeJoints = animals[0].chita.GetComponentsInChildren<HingeJoint>();
+                        for (int i = 0; i < hingeJoints.Length; i++)
+                        {
+                            hingeJoints[i].GetComponent<Rigidbody>().velocity = new Vector3(3f, 0f, 0f);
+                        }
+                    }
                         //EditorApplication.isPaused = true;
                         entradaSaidaRede();
 
@@ -353,10 +388,10 @@ public class poseController : MonoBehaviour {
                                 nets[populationIterator].SetFitness(animals[0].chita.transform.Find("Torax").transform.position.x - largada.transform.position.x);
                             }
                             fitnesses.Add((nets[populationIterator].GetFitness()));
-                            //avaliar();
+                            //avaliarTotal();
                             GameObject.Destroy(animals[0].chita.gameObject);
                             animals.Remove(animals[0]);
-                            salvouFitness = true;
+                            //salvouFitness = true;
                             populationIterator++;
                         }
                     }
@@ -372,14 +407,14 @@ public class poseController : MonoBehaviour {
     public void criarArgamassa(bool melhor = false) {
         if (melhor) {
             print("X - Melhor");
-            bestNet.SetWeight(consulta(19));
+            bestNet.SetWeight(consulta(21));
             bestAnimalx = (new Animalx(GameObject.Instantiate(chita)));
             bestAnimalx.chita.transform.position = new Vector3(-2.16f, -0.67f, -(2f * 1));
             bestAnimalx.chita.name = "Melhor";
         } else {
             animals.Add(new Animalx(GameObject.Instantiate(chita)));
             animals[animals.Count - 1].chita.transform.position = new Vector3(-2.16f, -0.67f, -(2f * animals.Count));
-            animals[animals.Count - 1].chita.name = "AAA" + animals.Count;
+            animals[animals.Count - 1].chita.name = "AAA" + populationIterator;
         }
     }
 
