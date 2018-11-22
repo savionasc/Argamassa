@@ -12,7 +12,7 @@ public class Animalx{
 	public GameObject chita;
 	public bool pernaFrente = false;
 	public bool pernaTras = false;
-	public bool iniciado = false;
+	public bool iniciado = true;
 	public GameObject CoxaDB, CanelaDB, PeDB, CoxaEB, CanelaEB, PeEB;
 	public Rigidbody CoxaDrb, CanelaDrb, PeDrb, CoxaErb, CanelaErb, PeErb, torax;
 
@@ -51,6 +51,7 @@ public class poseController : MonoBehaviour {
     List<float> fitnesses;
     List<Animalx> animals;
     bool salvouFitness = false;
+    public bool verMelhorDaGeração = false;
 
     private int ct = 0;
     public int evaluationTime = 440;
@@ -137,7 +138,10 @@ public class poseController : MonoBehaviour {
                 fitnesses.Sort();
                 avaliarTotal();
                 print("avaliarTotal");
-                visualizarMelhor();
+
+                if (verMelhorDaGeração)
+                    visualizarMelhor();
+
                 //print("Pior rede: " + nets[0].GetFitness());
                 //print("Melhor rede: " + nets[nets.Count - 1].GetFitness());
                 print("ciclo");
@@ -222,11 +226,13 @@ public class poseController : MonoBehaviour {
             if (output[0] > 0f){
                 //print("XXXXXXXXXXXXXXXX"); print("Z" + output[0] + "Y: " + output[1]);
                 esticaPernaTrasVetor(animals[0]);
+                numPressTras--;
             }
 
             if (output[1] > 0f){
                 //print("YYYYYYYYYYYYYYYYYYY"); print("Z" + output[0] + "Y: " + output[1]);
                 esticaPernaFrenteVetor(animals[0]);
+                numPressFrente--;
             }
 
             if (ct % ritmo == 0f){
@@ -251,19 +257,15 @@ public class poseController : MonoBehaviour {
 
             //if (abordagem == false){
             instanciacaoPersonagem();
-            for (ct = 1; ct <= evaluationTime; ct++)
-            {
+            for (ct = 1; ct <= evaluationTime; ct++){
                 entradaSaidaRede();
                 Physics.Simulate(Time.fixedDeltaTime);
             }
-            if (testeColisao.GetComponent<colisao>().colidiu == true)
-            {
-                print("Colidiu");
+            if (testeColisao.GetComponent<colisao>().colidiu == true || numPressFrente < 0 || numPressTras < 0){
+                print("Eliminado");
                 nets[populationIterator].SetFitness(-100f);
                 testeColisao.GetComponent<MeshRenderer>().material.color = new Color(100, 0, 0, 0.5f);
-            }
-            else
-            {
+            }else{
                 nets[populationIterator].SetFitness(animals[0].chita.transform.Find("Torax").transform.position.x - largada.transform.position.x);
             }
             fitnesses.Add((nets[populationIterator].GetFitness()));
@@ -283,6 +285,8 @@ public class poseController : MonoBehaviour {
     public bool[] oncebest = { false, false };
     public bool best = false;
     public Animalx bestAnimalx;
+    public int numPressFrente = 220;
+    public int numPressTras = 220;
     void FixedUpdate() {
         if (visualizacao) {
             if (best) {
@@ -297,7 +301,7 @@ public class poseController : MonoBehaviour {
                     print("Entrou com ct: "+ct);
                 }
                 ct++;
-                print("meu ct++: "+ct);
+                //print("meu ct++: "+ct);
                 if (abordagem == false){
                     if (bestAnimalx.chita != null){
                         float[] inputs = new float[4];
@@ -355,7 +359,6 @@ public class poseController : MonoBehaviour {
                                 visualizacao = false;
                             }
                         }
-
                     }
                 }
             } else {
@@ -405,6 +408,8 @@ public class poseController : MonoBehaviour {
     }
 
     public void criarArgamassa(bool melhor = false) {
+        numPressTras = 0;
+        numPressFrente = 0;
         if (melhor) {
             print("X - Melhor");
             bestNet.SetWeight(consulta(21));
@@ -438,19 +443,17 @@ public class poseController : MonoBehaviour {
     }
 
     public void avaliarTotal(){
-        if (!salvouFitness){
-            Text tx = GameObject.Find("TextA0").GetComponent<Text>();
-            tx.text = ("Fit atual: " + fitnesses[fitnesses.Count - 1]);
-            Text txFts = GameObject.Find("TextA1").GetComponent<Text>();
-            for (int i = 0; i < populationSize; i++) {
-                txFts.text += " " + fitnesses[i];
-                if (i%4 == 3) {
-                    txFts.text += "\n";
-                }
+        Text tx = GameObject.Find("TextA0").GetComponent<Text>();
+        tx.text = ("Fit atual: " + fitnesses[fitnesses.Count - 1]);
+        Text txFts = GameObject.Find("TextA1").GetComponent<Text>();
+        for (int i = 0; i < populationSize; i++) {
+            txFts.text += " " + fitnesses[i];
+            if (i%4 == 3) {
+                txFts.text += "\n";
             }
-            txFts.text += "\n|G: " + (generationNumber + 1) + "|\n";
-            fitnesses.Clear();
         }
+        txFts.text += "\n|G: " + (generationNumber + 1) + "|\n";
+        fitnesses.Clear();
     }
 
 
