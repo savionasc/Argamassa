@@ -77,10 +77,12 @@ public class poseController : MonoBehaviour {
     public bool[] oncebest = { false, false };
     public bool best = false;
     public Animalx bestAnimalx;
-    public int numPressFrente = 220;
-    public int numPressTras = 220;
-
+    public int limite = 22;
+    public int numPressFrente;
+    public int numPressTras;
     void Awake() {
+        numPressFrente = limite;
+        numPressTras = limite;
         chita = GameObject.Find("Chita");
         largada = GameObject.Find("Largada");
     }
@@ -205,56 +207,55 @@ public class poseController : MonoBehaviour {
     }
 
     void entradaSaidaRede(){
-        float[] inputs = new float[4];
-        if (animals[0].torax.transform.eulerAngles.z > 180){
-            inputs[3] = animals[0].torax.transform.eulerAngles.z - 360;
-        }else{
-            inputs[3] = animals[0].torax.transform.eulerAngles.z;
+        if (animals.Count > 0){
+            float[] inputs = new float[4];
+            if (animals[0].torax.transform.eulerAngles.z > 180){
+                inputs[3] = animals[0].torax.transform.eulerAngles.z - 360;
+            }else{
+                inputs[3] = animals[0].torax.transform.eulerAngles.z;
+            }
+
+            inputs[3] = conversao(inputs[3], 90f, -90f, 0.5f, -0.5f);
+            inputs[2] = animals[0].torax.transform.position.y - chao.transform.position.y /*Altura do tórax*/;
+            inputs[2] = conversao(inputs[2], 3.7f, 0.7f, 0.5f, -0.5f);
+            inputs[1] = animals[0].PeDrb.transform.position.y - chao.transform.position.y  /*Altura da pata da frente*/;
+            inputs[1] = conversao(inputs[1], 3.3f, -0.3f, 0.5f, -0.5f);
+            inputs[0] = animals[0].PeErb.transform.position.y - chao.transform.position.y /*Altura da pata de trás*/;
+            inputs[0] = conversao(inputs[0], 3.3f, -0.3f, 0.5f, -0.5f);
+
+            float[] output = nets[populationIterator].FeedForward(inputs);
+            if (!abordagem){
+                if (output[0] > 0f){
+                    esticaPernaTrasVetor(animals[0]);
+                    numPressTras--;
+                }
+
+                if (output[1] > 0f){
+                    esticaPernaFrenteVetor(animals[0]);
+                    numPressFrente--;
+                }
+
+                if (ct % ritmo == 0f){
+                    esticaPernaTrasVetor(animals[0]);
+                }
+
+                if ((ct + (ritmo / 2)) % ritmo == 0){
+                    esticaPernaFrenteVetor(animals[0]);
+                }
+            }
+            else
+            {
+                esticaPernaFrente(animals[0], output[0] * 180, output[1] * 180, output[2] * 180);
+                esticaPernaTras(animals[0], output[3] * 180, output[4] * 180, output[5] * 180);
+            }
         }
+    }
 
-        inputs[3] = conversao(inputs[3], 90f, -90f, 0.5f, -0.5f);
-        inputs[2] = animals[0].torax.transform.position.y - chao.transform.position.y /*Altura do tórax*/;
-        inputs[2] = conversao(inputs[2], 3.7f, 0.7f, 0.5f, -0.5f);
-        inputs[1] = animals[0].PeDrb.transform.position.y - chao.transform.position.y  /*Altura da pata da frente*/;
-        inputs[1] = conversao(inputs[1], 3.3f, -0.3f, 0.5f, -0.5f);
-        inputs[0] = animals[0].PeErb.transform.position.y - chao.transform.position.y /*Altura da pata de trás*/;
-        inputs[0] = conversao(inputs[0], 3.3f, -0.3f, 0.5f, -0.5f);
-
-        /*if (inputs[0] > 0.5f || inputs[0] < -0.5f){
-            print("Passou NO INPUT[0]: " + inputs[0]);
-        }else if(inputs[1] > 0.5f || inputs[1] < -0.5f){
-            print("Passou NO INPUT[1]: " + inputs[1]);
-        }else if (inputs[2] > 0.5f || inputs[2] < -0.5f){
-            print("Passou NO INPUT[2]: " + inputs[2]);
-        }else if (inputs[3] > 0.5f || inputs[3] < -0.5f){
-            print("Passou NO INPUT[3]: " + inputs[3]);
-        }*/
-
-        float[] output = nets[populationIterator].FeedForward(inputs);
-        if (!abordagem){
-            if (output[0] > 0f){
-                //print("XXXXXXXXXXXXXXXX"); print("Z" + output[0] + "Y: " + output[1]);
-                esticaPernaTrasVetor(animals[0]);
-                numPressTras--;
-            }
-
-            if (output[1] > 0f){
-                //print("YYYYYYYYYYYYYYYYYYY"); print("Z" + output[0] + "Y: " + output[1]);
-                esticaPernaFrenteVetor(animals[0]);
-                numPressFrente--;
-            }
-
-            if (ct % ritmo == 0f){
-                esticaPernaTrasVetor(animals[0]);
-            }
-
-            if ((ct + (ritmo / 2)) % ritmo == 0){
-                esticaPernaFrenteVetor(animals[0]);
-            }
-        }else{
-            esticaPernaFrente(animals[0], output[0] * 180, output[1] * 180, output[2] * 180);
-            esticaPernaTras(animals[0], output[3] * 180, output[4] * 180, output[5] * 180);
+    float calcularErro(int press, int limite, float punicao) {
+        if (press > limite){
+            return -(Mathf.Pow((press-limite), 2))-punicao;
         }
+        return 0;
     }
 
     // Update is called once per frame
@@ -276,13 +277,21 @@ public class poseController : MonoBehaviour {
                 entradaSaidaRede();
                 Physics.Simulate(Time.fixedDeltaTime);
             }
-            if (testeColisao.GetComponent<colisao>().colidiu == true){
+
+            float dist = animals[0].chita.transform.Find("Torax").transform.position.x - largada.transform.position.x;
+            if (numPressFrente < 0 || numPressTras < 0) {
+                float erro1 = calcularErro(-(numPressFrente - limite), limite, -100);
+                float erro2 = calcularErro(-(numPressTras - limite), limite, -100);
+                nets[populationIterator].SetFitness(dist + erro1 + erro2);
+            }
+            else if (testeColisao.GetComponent<colisao>().colidiu == true){
                 print("Eliminado");
                 nets[populationIterator].SetFitness(-100f);
                 testeColisao.GetComponent<MeshRenderer>().material.color = new Color(100, 0, 0, 0.5f);
             }else{
-                nets[populationIterator].SetFitness(animals[0].chita.transform.Find("Torax").transform.position.x - largada.transform.position.x);
+                nets[populationIterator].SetFitness(dist);
             }
+            //nets[populationIterator].SetFitness(numPressFrente + numPressTras);
             fitnesses.Add((nets[populationIterator].GetFitness()));
             //avaliar();
             GameObject.Destroy(animals[0].chita.gameObject);
@@ -389,25 +398,32 @@ public class poseController : MonoBehaviour {
                             hingeJoints[i].GetComponent<Rigidbody>().velocity = velocidade;
                     }
                         //EditorApplication.isPaused = true;
-                        entradaSaidaRede();
 
                         if ((ct > evaluationTime) && !salvouFitness){
-                            if (testeColisao.GetComponent<colisao>().colidiu == true){
+                            float dist = animals[0].chita.transform.Find("Torax").transform.position.x - largada.transform.position.x;
+                            if (numPressFrente < 0 || numPressTras < 0){
+                                float erro1 = calcularErro(-(numPressFrente - limite), limite, -100);
+                                float erro2 = calcularErro(-(numPressTras - limite), limite, -100);
+                                nets[populationIterator].SetFitness(dist + erro1 + erro2);
+                            }else if (testeColisao.GetComponent<colisao>().colidiu == true){
                                 print("Colidiu");
                                 nets[populationIterator].SetFitness(-100);
                                 //animals[0].net.SetFitness(animals[0].chita.transform.Find("Torax").transform.position.x - largada.transform.position.x);
                                 testeColisao.GetComponent<MeshRenderer>().material.color = new Color(100, 0, 0, 0.5f);
                             }else{
-                                nets[populationIterator].SetFitness(animals[0].chita.transform.Find("Torax").transform.position.x - largada.transform.position.x);
+                                nets[populationIterator].SetFitness(dist);
                             }
+                            //nets[populationIterator].SetFitness(numPressFrente+numPressTras);
                             fitnesses.Add((nets[populationIterator].GetFitness()));
                             //avaliarTotal();
                             GameObject.Destroy(animals[0].chita.gameObject);
                             animals.Remove(animals[0]);
                             //salvouFitness = true;
                             populationIterator++;
+                        }else{
+                            entradaSaidaRede();
                         }
-                    }
+                }
 
                     if (ct > evaluationTime + 1){
                         ct = 0;
@@ -418,8 +434,8 @@ public class poseController : MonoBehaviour {
     }
 
     public void criarArgamassa(bool melhor = false) {
-        numPressTras = 0;
-        numPressFrente = 0;
+        numPressTras = limite;
+        numPressFrente = limite;
         if (melhor) {
             print("X - Melhor");
             bestNet.SetWeight(consulta(21));
