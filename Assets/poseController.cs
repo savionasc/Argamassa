@@ -139,7 +139,7 @@ public class poseController : MonoBehaviour {
                 avaliarTotal();
                 print("avaliarTotal");
 
-                if (verMelhorDaGeração)
+                if (verMelhorDaGeração && !visualizacao)
                     visualizarMelhor();
 
                 //print("Pior rede: " + nets[0].GetFitness());
@@ -257,11 +257,18 @@ public class poseController : MonoBehaviour {
 
             //if (abordagem == false){
             instanciacaoPersonagem();
+            if (ct == 0){
+                Component[] hingeJoints = animals[0].chita.GetComponentsInChildren<HingeJoint>();
+                for (int i = 0; i < hingeJoints.Length; i++){
+                    hingeJoints[i].GetComponent<Rigidbody>().velocity = new Vector3(3f, 0f, 0f);
+                }
+            }
+
             for (ct = 1; ct <= evaluationTime; ct++){
                 entradaSaidaRede();
                 Physics.Simulate(Time.fixedDeltaTime);
             }
-            if (testeColisao.GetComponent<colisao>().colidiu == true || numPressFrente < 0 || numPressTras < 0){
+            if (testeColisao.GetComponent<colisao>().colidiu == true){
                 print("Eliminado");
                 nets[populationIterator].SetFitness(-100f);
                 testeColisao.GetComponent<MeshRenderer>().material.color = new Color(100, 0, 0, 0.5f);
@@ -369,7 +376,6 @@ public class poseController : MonoBehaviour {
                         salvouFitness = false;
                     }
                     ct++;
-                    print("CT: "+ct);
                     if (animals.Count > 0) {
                         if (ct == 1){
                         Component[] hingeJoints = animals[0].chita.GetComponentsInChildren<HingeJoint>();
