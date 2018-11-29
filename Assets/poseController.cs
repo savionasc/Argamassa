@@ -59,7 +59,7 @@ public class poseController : MonoBehaviour {
     public bool abordagem = false;
     public bool novasRedes = false;
     public Vector3 velocidade = new Vector3(3f, 0f, 0f);
-    public int ritmo = 30;
+    public int ritmo = 36;
 
     private GameObject testeColisao;
     private int populationSize = 1;
