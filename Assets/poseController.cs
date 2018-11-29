@@ -58,6 +58,7 @@ public class poseController : MonoBehaviour {
     public bool visualizacao = false;
     public bool abordagem = false;
     public bool novasRedes = false;
+    public Vector3 velocidade = new Vector3(3f, 0f, 0f);
     private int ritmo = 30;
 
     private GameObject testeColisao;
@@ -259,9 +260,8 @@ public class poseController : MonoBehaviour {
             instanciacaoPersonagem();
             if (ct == 0){
                 Component[] hingeJoints = animals[0].chita.GetComponentsInChildren<HingeJoint>();
-                for (int i = 0; i < hingeJoints.Length; i++){
-                    hingeJoints[i].GetComponent<Rigidbody>().velocity = new Vector3(3f, 0f, 0f);
-                }
+                for (int i = 0; i < hingeJoints.Length; i++)
+                    hingeJoints[i].GetComponent<Rigidbody>().velocity = velocidade;
             }
 
             for (ct = 1; ct <= evaluationTime; ct++){
@@ -380,9 +380,7 @@ public class poseController : MonoBehaviour {
                         if (ct == 1){
                         Component[] hingeJoints = animals[0].chita.GetComponentsInChildren<HingeJoint>();
                         for (int i = 0; i < hingeJoints.Length; i++)
-                        {
-                            hingeJoints[i].GetComponent<Rigidbody>().velocity = new Vector3(3f, 0f, 0f);
-                        }
+                            hingeJoints[i].GetComponent<Rigidbody>().velocity = velocidade;
                     }
                         //EditorApplication.isPaused = true;
                         entradaSaidaRede();
