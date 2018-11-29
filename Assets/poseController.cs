@@ -59,7 +59,7 @@ public class poseController : MonoBehaviour {
     public bool abordagem = false;
     public bool novasRedes = false;
     public Vector3 velocidade = new Vector3(3f, 0f, 0f);
-    private int ritmo = 30;
+    public int ritmo = 30;
 
     private GameObject testeColisao;
     private int populationSize = 1;
@@ -71,6 +71,14 @@ public class poseController : MonoBehaviour {
 
     string urlDataBase = "URI=file:MasterSQLite.db";
     IDbCommand _command;
+
+    //true, true para visualizar o melhor com visualizacao == true antes de mostrar o melhor
+    //true, false para visualizar o melhor com visualizacao == false antes de mostrar o melhor
+    public bool[] oncebest = { false, false };
+    public bool best = false;
+    public Animalx bestAnimalx;
+    public int numPressFrente = 220;
+    public int numPressTras = 220;
 
     void Awake() {
         chita = GameObject.Find("Chita");
@@ -287,13 +295,6 @@ public class poseController : MonoBehaviour {
             ct = 0;
         }
     }
-    //true, true para visualizar o melhor com visualizacao == true antes de mostrar o melhor
-    //true, false para visualizar o melhor com visualizacao == false antes de mostrar o melhor
-    public bool[] oncebest = { false, false };
-    public bool best = false;
-    public Animalx bestAnimalx;
-    public int numPressFrente = 220;
-    public int numPressTras = 220;
     void FixedUpdate() {
         if (visualizacao) {
             if (best) {
@@ -309,62 +310,67 @@ public class poseController : MonoBehaviour {
                 }
                 ct++;
                 //print("meu ct++: "+ct);
-                if (abordagem == false){
-                    if (bestAnimalx.chita != null){
-                        float[] inputs = new float[4];
-                        if (bestAnimalx.torax.transform.eulerAngles.z > 180){
-                            inputs[3] = bestAnimalx.torax.transform.eulerAngles.z - 360;
-                        }else{
-                            inputs[3] = bestAnimalx.torax.transform.eulerAngles.z;
-                        }
-                        inputs[3] = conversao(inputs[3], 90f, -90f, 0.5f, -0.5f);
-                        inputs[2] = bestAnimalx.torax.transform.position.y - chao.transform.position.y /*Altura do tórax*/;
-                        inputs[2] = conversao(inputs[2], 3.7f, 0.7f, 0.5f, -0.5f);
-                        inputs[1] = bestAnimalx.PeDrb.transform.position.y - chao.transform.position.y  /*Altura da pata da frente*/;
-                        inputs[1] = conversao(inputs[1], 3.3f, -0.3f, 0.5f, -0.5f);
-                        inputs[0] = bestAnimalx.PeErb.transform.position.y - chao.transform.position.y /*Altura da pata de trás*/;
-                        inputs[0] = conversao(inputs[0], 3.3f, -0.3f, 0.5f, -0.5f);
+                //if (abordagem == false){
+                if (ct == 1 && bestAnimalx.chita != null){
+                    Component[] hingeJoints = bestAnimalx.chita.GetComponentsInChildren<HingeJoint>();
+                    for (int i = 0; i < hingeJoints.Length; i++)
+                        hingeJoints[i].GetComponent<Rigidbody>().velocity = velocidade;
+                }
 
-                        float[] output = bestNet.FeedForward(inputs);
-                        if (output[0] > 0f){
-                            esticaPernaTrasVetor(bestAnimalx);
-                        }
+                if (bestAnimalx.chita != null){
+                    float[] inputs = new float[4];
+                    if (bestAnimalx.torax.transform.eulerAngles.z > 180){
+                        inputs[3] = bestAnimalx.torax.transform.eulerAngles.z - 360;
+                    }else{
+                        inputs[3] = bestAnimalx.torax.transform.eulerAngles.z;
+                    }
+                    inputs[3] = conversao(inputs[3], 90f, -90f, 0.5f, -0.5f);
+                    inputs[2] = bestAnimalx.torax.transform.position.y - chao.transform.position.y /*Altura do tórax*/;
+                    inputs[2] = conversao(inputs[2], 3.7f, 0.7f, 0.5f, -0.5f);
+                    inputs[1] = bestAnimalx.PeDrb.transform.position.y - chao.transform.position.y  /*Altura da pata da frente*/;
+                    inputs[1] = conversao(inputs[1], 3.3f, -0.3f, 0.5f, -0.5f);
+                    inputs[0] = bestAnimalx.PeErb.transform.position.y - chao.transform.position.y /*Altura da pata de trás*/;
+                    inputs[0] = conversao(inputs[0], 3.3f, -0.3f, 0.5f, -0.5f);
 
-                        if (output[1] > 0f){
-                            esticaPernaFrenteVetor(bestAnimalx);
-                        }
-
-                        if (ct % ritmo == 0){
-                            esticaPernaTrasVetor(bestAnimalx);
-                        }
-
-                        if ((ct + (ritmo / 2)) % ritmo == 0){
-                            esticaPernaFrenteVetor(bestAnimalx);
-                        }
-
-                        if ((ct > evaluationTime) && !salvouFitness){
-                            if (testeColisao.GetComponent<colisao>().colidiu == true){
-                                print("Colidiu");
-                                bestNet.SetFitness(-100f);
-                                //testeColisao.GetComponent<MeshRenderer>().material.color = new Color(100, 0, 0, 0.5f);
-                            }else{
-                                bestNet.SetFitness((bestAnimalx.chita.transform.Find("Torax").transform.position.x - largada.transform.position.x));
-                            }
-                            fitnesses.Add(bestNet.GetFitness());
-                            //avaliar();
-                            print("Fitness da best: "+ bestNet.GetFitness());
-                            GameObject.Destroy(bestAnimalx.chita.gameObject);
-                            salvouFitness = true;
-                        }
+                    float[] output = bestNet.FeedForward(inputs);
+                    if (output[0] > 0f){
+                        esticaPernaTrasVetor(bestAnimalx);
                     }
 
-                    if (ct > evaluationTime + 1){
-                        ct = 0;
-                        if (oncebest[0]){
-                            best = false;
-                            if (!oncebest[1]){
-                                visualizacao = false;
-                            }
+                    if (output[1] > 0f){
+                        esticaPernaFrenteVetor(bestAnimalx);
+                    }
+
+                    if (ct % ritmo == 0){
+                        esticaPernaTrasVetor(bestAnimalx);
+                    }
+
+                    if ((ct + (ritmo / 2)) % ritmo == 0){
+                        esticaPernaFrenteVetor(bestAnimalx);
+                    }
+
+                    if ((ct > evaluationTime) && !salvouFitness){
+                        if (testeColisao.GetComponent<colisao>().colidiu == true){
+                            print("Colidiu");
+                            bestNet.SetFitness(-100f);
+                            //testeColisao.GetComponent<MeshRenderer>().material.color = new Color(100, 0, 0, 0.5f);
+                        }else{
+                            bestNet.SetFitness((bestAnimalx.chita.transform.Find("Torax").transform.position.x - largada.transform.position.x));
+                        }
+                        fitnesses.Add(bestNet.GetFitness());
+                        //avaliar();
+                        print("Fitness da best: "+ bestNet.GetFitness());
+                        GameObject.Destroy(bestAnimalx.chita.gameObject);
+                        salvouFitness = true;
+                    }
+                }
+
+                if (ct > evaluationTime + 1){
+                    ct = 0;
+                    if (oncebest[0]){
+                        best = false;
+                        if (!oncebest[1]){
+                            visualizacao = false;
                         }
                     }
                 }
