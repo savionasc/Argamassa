@@ -50,6 +50,7 @@ public class poseController : MonoBehaviour {
     public GameObject chita;
     List<float> fitnesses;
     List<Animalx> animals;
+    List<int> resortear;
     bool salvouFitness = false;
     public bool verMelhorDaGeração = false;
 
@@ -62,7 +63,7 @@ public class poseController : MonoBehaviour {
     public int ritmo = 36;
 
     private GameObject testeColisao;
-    private int populationSize = 1;
+    private int populationSize = 50;
     private int populationIterator = 0;
     private int generationNumber = 0;
     private List<NeuralNetwork> nets;
@@ -90,6 +91,7 @@ public class poseController : MonoBehaviour {
     void Start() {
         animals = new List<Animalx>();
         fitnesses = new List<float>();
+        resortear = new List<int>();
         salvouFitness = false;
         inicializaDB();
         if (!abordagem){
@@ -102,10 +104,19 @@ public class poseController : MonoBehaviour {
             bestNet.SetWeight(consulta(21));
         }
     }
+    void Init10Primeiros() {
+        for (int i = 0; i < 8; i++){
+            NeuralNetwork net = new NeuralNetwork(layers);
+            net.Mutate();
+            nets[i] = net;
+        }
+        nets[8].Mutate();
+        nets[9].Mutate();
+    }
 
     void InitArgamassaNeuralNetworks() {
         if (populationSize % 2 != 0) {
-            populationSize = 22;
+            populationSize = 50;
         }
         nets = new List<NeuralNetwork>();
         for (int i = 0; i < populationSize; i++) {
@@ -166,14 +177,26 @@ public class poseController : MonoBehaviour {
 
                 for (int i = 0; i < populationSize; i++){
                     inserir(i);
+                    if (nets[i].GetFitness() == -100) {
+                        nets[i] = new NeuralNetwork(layers);//, false);
+                    }
                     nets[i].SetFitness(0f);
                 }
 
                 for (int i = 0; i < populationSize / 2; i++){
-                    nets[i] = new NeuralNetwork(nets[i + (populationSize / 2)]);//, false);
-                    nets[i].Mutate();
+                    if (i >= 10){
+                        nets[i] = new NeuralNetwork(nets[i + (populationSize / 2)]);//, false);
+                        nets[i].Mutate();
+                    }
                     nets[i + (populationSize / 2)] = new NeuralNetwork(nets[i + (populationSize / 2)]);//, true); //too lazy to write a reset neuron matrix values method....so just going to make a deepcopy lol
                 }
+
+                foreach (var item in resortear){
+                    nets[item] = new NeuralNetwork(layers);
+                    print("resorteou item: "+item);
+                }
+
+                Init10Primeiros();
 
                 generationNumber++;
                 Text textGeracao = GameObject.Find("Geracao").GetComponent<Text>();
@@ -253,7 +276,7 @@ public class poseController : MonoBehaviour {
 
     float calcularErro(int press, int limite, float punicao) {
         if (press > limite){
-            return -(Mathf.Pow((press-limite), 2))-punicao;
+            return -(Mathf.Pow((press-limite), 2))+punicao;
         }
         return 0;
     }
@@ -282,14 +305,17 @@ public class poseController : MonoBehaviour {
             if (numPressFrente < 0 || numPressTras < 0) {
                 float erro1 = calcularErro(-(numPressFrente - limite), limite, -100);
                 float erro2 = calcularErro(-(numPressTras - limite), limite, -100);
+                //print("Erro: "+ (nets[populationIterator].GetFitness())+ "E1: "+erro1+" E2: "+erro2+" D: "+dist);
                 nets[populationIterator].SetFitness(dist + erro1 + erro2);
-            }
-            else if (testeColisao.GetComponent<colisao>().colidiu == true){
-                print("Eliminado");
+            }else if (testeColisao.GetComponent<colisao>().colidiu == true){
+                //print("Eliminado");
                 nets[populationIterator].SetFitness(-100f);
                 testeColisao.GetComponent<MeshRenderer>().material.color = new Color(100, 0, 0, 0.5f);
-            }else{
+                resortear.Add(populationIterator);
+            }
+            else{
                 nets[populationIterator].SetFitness(dist);
+                print("D: " + dist);
             }
             //nets[populationIterator].SetFitness(numPressFrente + numPressTras);
             fitnesses.Add((nets[populationIterator].GetFitness()));
@@ -405,12 +431,17 @@ public class poseController : MonoBehaviour {
                                 float erro1 = calcularErro(-(numPressFrente - limite), limite, -100);
                                 float erro2 = calcularErro(-(numPressTras - limite), limite, -100);
                                 nets[populationIterator].SetFitness(dist + erro1 + erro2);
-                            }else if (testeColisao.GetComponent<colisao>().colidiu == true){
-                                print("Colidiu");
+                                //print("Erro: " + (nets[populationIterator].GetFitness()) + "Passagem: " + -(numPressFrente - limite)  + " E1: " + erro1 + " E2: " + erro2 + " D: " + dist);
+                            }
+                            else if (testeColisao.GetComponent<colisao>().colidiu == true){
+                                //print("Colidiu");
                                 nets[populationIterator].SetFitness(-100);
                                 //animals[0].net.SetFitness(animals[0].chita.transform.Find("Torax").transform.position.x - largada.transform.position.x);
                                 testeColisao.GetComponent<MeshRenderer>().material.color = new Color(100, 0, 0, 0.5f);
+                                resortear.Add(populationIterator);
+
                             }else{
+                                print(" D: " + dist);
                                 nets[populationIterator].SetFitness(dist);
                             }
                             //nets[populationIterator].SetFitness(numPressFrente+numPressTras);
@@ -438,7 +469,7 @@ public class poseController : MonoBehaviour {
         numPressFrente = limite;
         if (melhor) {
             print("X - Melhor");
-            bestNet.SetWeight(consulta(21));
+            bestNet.SetWeight(consulta(49));
             bestAnimalx = (new Animalx(GameObject.Instantiate(chita)));
             bestAnimalx.chita.transform.position = new Vector3(-2.16f, -0.67f, -(2f * 1));
             bestAnimalx.chita.name = "Melhor";
@@ -495,10 +526,10 @@ public class poseController : MonoBehaviour {
 
     public string inserir(int id){
         string sql = "INSERT INTO redes_neurais (id, layers, weights) values(" + id + ", '" + nets[id].GetSLayers() + "','" + nets[id].GetSWeights() + "')";
-        print("X: " + id + ", '" + nets[id].GetSWeights());
+        //print("X: " + id + ", '" + nets[id].GetSWeights());
         _command.CommandText = sql;
         _command.ExecuteNonQuery();
-        print("Rede inserida: " + nets[id].GetSWeights());
+        //print("Rede inserida: " + nets[id].GetSWeights());
         return ("Inseriu");
     }
 
